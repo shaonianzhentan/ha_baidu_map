@@ -15,17 +15,16 @@ def setup(hass, config):
 
     hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/ha-panel-baidu-map.js')
 
-    frontend_url_path = cfg.get('path', 'ha_baidu_map')
     _name = cfg.get('name', '百度地图')
     _icon = cfg.get('icon', 'mdi:map-marker-radius')
-    _map_ak = config.get("map_ak", 'ha_cloud_music')
+    _ak = config.get("ak", 'ha_cloud_music')
 
     hass.components.frontend.async_register_built_in_panel(
         "baidu-map",
         _name,
         _icon,
-        frontend_url_path,
-        config={"ak": _map_ak},
+        frontend_url_path='ha_baidu_map',
+        config={"ak": _ak},
         require_admin=True)
 
     return True
