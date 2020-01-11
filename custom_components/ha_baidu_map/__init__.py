@@ -1,6 +1,7 @@
 import os
 import uuid
 import logging
+from homeassistant.components.http import HomeAssistantView
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ class HassGateView(HomeAssistantView):
                     size += len(chunk)
                     f.write(chunk)
         
-            return self.json({'code':1, 'msg': '百度语音识别错误'})            
+            return self.json({'code':1, 'msg': '百度地图'})            
         except Exception as e:
             print(e)
             return self.json({'code':1, 'msg': '出现异常'})
