@@ -103,10 +103,20 @@ class HassGateView(HomeAssistantView):
         try:
             res = await request.json()  
             _LOGGER.info(res)
-            # 获取同一时刻的GPS记录，生成运动轨迹
-            if res['type'] == 'get':
-                sql = hass.data[URL]
-                _list = sql.query("select * from ha_baidu_map where starttimestamp = '" + sql.filter(res['sts']) + "'")
+            sql = hass.data[URL]
+            
+            if res['type'] == 'get_list':
+                # 获取同一时刻的GPS记录，生成运动轨迹
+                _list = sql.query("select * from ha_baidu_map where starttimestamp = '" + sql.filter(res['sts']) 
+                + "' order by cdate asc")
+                return self.json(_list)
+            elif res['type'] == 'get_sts':
+                # 获取 有5条记录 的所有时刻
+                _list = sql.query("""
+                    select starttimestamp,count(starttimestamp) as c 
+                    from ha_baidu_map group by starttimestamp 
+                    having count(starttimestamp) >= 5
+                """)
                 return self.json(_list)
             # 删除某些时刻的运动轨迹
             # 删除所有数据
@@ -186,8 +196,8 @@ class SqlLite():
             for rowproxy in result:
                 for tup in rowproxy.items():
                     d = {**d, **{tup[0]: tup[1]}}
-                    a.append(d)
-            _LOGGER.info(a)
+                a.append(d)
+            _LOGGER.debug(a)
             return a
         except sqlalchemy.exc.SQLAlchemyError as err:
             _LOGGER.error("出现异常: %s", err)
