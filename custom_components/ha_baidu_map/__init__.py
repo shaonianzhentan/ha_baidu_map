@@ -113,9 +113,9 @@ class HassGateView(HomeAssistantView):
             elif res['type'] == 'get_sts':
                 # 获取 有5条记录 的所有时刻
                 _list = sql.query("""
-                    select starttimestamp,count(starttimestamp) as c 
+                    select datetime(starttimestamp, 'unixepoch', 'localtime') as cdate,starttimestamp as sts,count(starttimestamp) as c 
                     from ha_baidu_map group by starttimestamp 
-                    having count(starttimestamp) >= 5
+                    having count(starttimestamp) >= 5 order by starttimestamp desc
                 """)
                 return self.json(_list)
             # 删除某些时刻的运动轨迹
