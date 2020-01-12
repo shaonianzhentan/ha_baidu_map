@@ -2,11 +2,14 @@ import os
 import uuid
 import logging
 from homeassistant.components.http import HomeAssistantView
+import sqlalchemy
+from sqlalchemy.orm import scoped_session, sessionmaker
+from homeassistant.components.recorder import CONF_DB_URL, DEFAULT_DB_FILE, DEFAULT_URL
 
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 URL = '/ha_baidu_map-api-'+ str(uuid.uuid4())
 ROOT_PATH = URL + '/' + VERSION
 
@@ -30,7 +33,7 @@ def setup(hass, config):
     版本：''' + VERSION + '''    
     项目地址：https://github.com/shaonianzhentan/ha_baidu_map
     安装信息：
-        通信地址：''' + URL + '''
+        通信地址：''' + hass.config.api.base_url + URL + '''
     
 -------------------------------------------------------------------''')
 
@@ -43,6 +46,11 @@ def setup(hass, config):
         require_admin=True)
 
     hass.http.register_view(HassGateView)
+    
+    hass.data[URL] = SqlLite(hass)
+    
+    
+    
     return True
 
 class HassGateView(HomeAssistantView):
@@ -54,20 +62,130 @@ class HassGateView(HomeAssistantView):
     async def post(self, request):
         hass = request.app["hass"]
         try:
-            reader = await request.multipart()
-            file = await reader.next()
-            # 生成文件
-            filename = os.path.dirname(__file__) + '/' + str(uuid.uuid4())+ '.json'
-            size = 0
-            with open(filename, 'wb') as f:
-                while True:
-                    chunk = await file.read_chunk()  # 默认是8192个字节。
-                    if not chunk:
-                        break
-                    size += len(chunk)
-                    f.write(chunk)
-        
-            return self.json({'code':1, 'msg': '百度地图'})            
+            res = await request.json()
+            if 'latitude' not in res and 'longitude' not in res and 'device' not in res:
+                return self.json({'code':1, 'msg': '参数不对'})
+                
+            if 'accuracy' not in res:
+                res['accuracy'] = ''
+            if 'battery' not in res:
+                res['battery'] = ''
+            if 'speed' not in res:
+                res['speed'] = ''
+            if 'direction' not in res:
+                res['direction'] = ''
+            if 'altitude' not in res:
+                res['altitude'] = ''
+            if 'activity' not in res:
+                res['activity'] = ''
+            if 'provider' not in res:
+                res['provider'] = ''
+
+            sql = hass.data[URL]
+            sql.add(res)
+            '''
+            sql.add({
+                'latitude':126.123123123,
+                'longitude':148.234234234234234,
+                'device':'我的设备',
+                'accuracy':'精确',
+                'battery':'电量',
+                'speed':'速度',
+                'direction':'方向',
+                'altitude':'海拔高度',
+                'provider':'供应商',
+                'activity':'活动'
+            })
+            '''            
+            return self.json({'code':0, 'msg': '接收成功'})            
         except Exception as e:
             print(e)
             return self.json({'code':1, 'msg': '出现异常'})
+            
+class SqlLite():
+    
+    def __init__(self, hass, db_url=None):
+        try:
+            if not db_url:
+                db_url = DEFAULT_URL.format(hass_config_path=hass.config.path(DEFAULT_DB_FILE))
+                
+            engine = sqlalchemy.create_engine(db_url)
+            self.sessmaker = scoped_session(sessionmaker(bind=engine))
+            # 初始化表
+            self.init_db()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            _LOGGER.error("Couldn't connect using %s DB_URL: %s", db_url, err)
+    
+    def init_db(self):
+        _rows = self.query("SELECT COUNT(*) as a FROM sqlite_master where type='table' and name='ha_baidu_map'")
+        # 如果表不存在，则创建
+        if _rows[0]['a'] == 0:
+            self.execute('''
+                CREATE TABLE ha_baidu_map(
+                    id integer PRIMARY KEY autoincrement,
+                    latitude double,
+                    longitude double,
+                    device text,
+                    accuracy text,
+                    battery text,
+                    speed text,
+                    direction text,
+                    altitude text,
+                    provider text,
+                    activity text,
+                    cdate datetime default (datetime('now', 'localtime'))
+                )
+            ''')
+            self.execute('''
+                CREATE INDEX ha_baidu_map_index_id ON ha_baidu_map(id);
+            ''')
+    
+    # 把单引号过滤掉，避免SQL注入
+    def filter(self, value):
+        return str(value).replace("'","")
+    
+    def execute(self, sql, func=None):
+        try:
+            # Run a dummy query just to test the db_url
+            sess = self.sessmaker()
+            _LOGGER.info(sql)
+            result = sess.execute(sql)
+            
+            if func != None:
+                func(sess)
+                
+            return result
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            _LOGGER.error("出现异常: %s", err)
+            return None
+        finally:
+            sess.close()
+    
+    def query(self, sql):
+        try:            
+            # Run a dummy query just to test the db_url
+            sess = self.sessmaker()
+            _LOGGER.info(sql)
+            result = sess.execute(sql)
+            d, a = {}, [] 
+            for rowproxy in result:
+                for tup in rowproxy.items():
+                    d = {**d, **{tup[0]: tup[1]}}
+                    a.append(d)
+            _LOGGER.info(a)
+            return a
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            _LOGGER.error("出现异常: %s", err)
+            return None
+        finally:
+            sess.close()
+            
+    def add(self, gps_info):
+        self.execute("""
+        insert into ha_baidu_map(latitude,longitude,device,accuracy,battery,speed,direction,altitude,provider,activity) values('""" 
+        + self.filter(gps_info['latitude']) + """','""" + self.filter(gps_info['longitude']) + """','""" 
+        + self.filter(gps_info['device']) + """','""" + self.filter(gps_info['accuracy']) + """','""" 
+        + self.filter(gps_info['battery']) + """','""" + self.filter(gps_info['speed']) + """','""" 
+        + self.filter(gps_info['direction']) + """','""" + self.filter(gps_info['altitude']) + """','""" 
+        + self.filter(gps_info['provider']) + """','""" + self.filter(gps_info['activity']) + """')
+        """, lambda sess: sess.commit())
