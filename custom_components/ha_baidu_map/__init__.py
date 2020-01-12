@@ -3,6 +3,8 @@ import re
 import uuid
 import logging
 import json
+import datetime
+from homeassistant.helpers.event import track_time_interval, async_call_later
 from homeassistant.components.http import HomeAssistantView
 import sqlalchemy
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -11,22 +13,28 @@ from homeassistant.components.recorder import CONF_DB_URL, DEFAULT_DB_FILE, DEFA
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 URL = '/ha_baidu_map-api'
 ROOT_PATH = URL + '/' + VERSION
 API_KEY = str(uuid.uuid4())
+# 定时器时间
+TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=5)
+
+device_list = {}
 
 def setup(hass, config):
     cfg  = config[DOMAIN]
     _name = cfg.get('name', '百度地图')
     _icon = cfg.get('icon', 'mdi:map-marker-radius')
     _ak = cfg.get("ak", 'ha_cloud_music')
-     # 验证api_key是否设置为uuid格式（为了安全，必须要这么做）
-    _api_key = cfg.get('api_key', '')
-    global API_KEY
-    if _api_key != '' and re.match('\w{8}(-\w{4}){3}-\w{12}', _api_key):
-        _LOGGER.info('【百度地图】使用自定义api_key：' + _api_key)
-        API_KEY = _api_key
+    record = cfg.get('record', [])
+    
+    global device_list
+    for item in record:
+      device_list[item] = {
+        'latitude': 0,
+        'longitude': 0
+      }
     
     # 注册静态目录
     local = hass.config.path("custom_components/ha_baidu_map/local")
@@ -41,11 +49,6 @@ def setup(hass, config):
     百度地图【作者QQ：635147515】
     版本：''' + VERSION + '''    
     项目地址：https://github.com/shaonianzhentan/ha_baidu_map
-    安装信息：
-    
-        通信URL：''' + hass.config.api.base_url + URL + '''
-        
-        通信密钥：''' + API_KEY + '''
     
 -------------------------------------------------------------------''')
 
@@ -59,9 +62,37 @@ def setup(hass, config):
 
     hass.http.register_view(HassGateView)
     
-    hass.data[URL] = SqlLite(hass)
+    sql = SqlLite(hass)
+    hass.data[URL] = sql
     
     
+    # 定时器
+    def interval(now):
+        # 读取设备信息
+        global device_list
+        for key in device_list:
+            state = hass.states.get(key)
+            attr =  dict(state.attributes)
+            if 'activity' not in attr:
+                continue
+            _LOGGER.info(state)
+            arr = attr['activity'].split('-')
+            prev = device_list[key]
+            if  len(arr) == 3 and (prev['latitude'] != attr['latitude'] or prev['longitude'] !=  attr['longitude']):
+                # 如果经纬度不一样，则记录
+                device_list[key]['latitude'] = attr['latitude']
+                device_list[key]['longitude'] = attr['longitude']
+                attr['device'] = attr['friendly_name']            
+                attr['accuracy'] = attr['gps_accuracy']    
+                attr['battery'] = attr['battery_level']
+                attr['activity'] = arr[0]
+                attr['dist'] = arr[1]
+                attr['starttimestamp'] = arr[2]
+                sql.add(attr)
+       
+       # device_tracker.wo_de_shou_ji
+        
+    track_time_interval(hass, interval, TIME_BETWEEN_UPDATES)
     
     return True
 

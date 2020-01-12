@@ -8,12 +8,13 @@
 ha_baidu_map:
 
 # 完整配置
-# api_key: 与【GPSLogger应用】通信的密钥（特定uuid格式）
+# record: 要记录使用GPSLogger的设备
 ha_baidu_map:
   name: 百度地图
   icon: mdi:map-marker-radius
   ak: 百度地图AK密钥
-  api_key: 29689819-3765-47f3-8528-2b1085f0dada
+  record:
+    - device_tracker.wo_de_shou_ji
 
 ```
 
@@ -21,33 +22,9 @@ ha_baidu_map:
 ```
 
 # HTTP 内容
-# api_key: 百度地图HA组件里配置的api_key，必填项
+# 只能修改【我的手机】
 
-{
-  "api_key": "29689819-3765-47f3-8528-2b1085f0dada",
-  "latitude": "%LAT",
-  "longitude": "%LON",
-  "device": "我的手机",
-  "accuracy": "%ACC",
-  "battery": "%BATT",
-  "speed": "%SPD",
-  "direction": "%DIR",
-  "altitude": "%ALT",
-  "provider": "%PROV",
-  "activity": "%ACT",
-  "starttimestamp": "%STARTTIMESTAMP",
-  "dist": "%DIST"
-}
-
-
-# HTTP 头
-
-Content-Type: application/json
-
-# HTTP 方法
-
-POST
-
+latitude=%LAT&longitude=%LON&device=我的手机&accuracy=%ACC&battery=%BATT&speed=%SPD&direction=%DIR&altitude=%ALT&provider=%PROV&activity=%ACT-%DIST-%STARTTIMESTAMP
 
 ```
 
