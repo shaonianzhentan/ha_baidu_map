@@ -18,7 +18,7 @@ URL = '/ha_baidu_map-api'
 ROOT_PATH = URL + '/' + VERSION
 API_KEY = str(uuid.uuid4())
 # 定时器时间
-TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=5)
+TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=3)
 
 device_list = {}
 
@@ -65,7 +65,6 @@ def setup(hass, config):
     sql = SqlLite(hass)
     hass.data[URL] = sql
     
-    
     # 定时器
     def interval(now):
         # 读取设备信息
@@ -75,11 +74,11 @@ def setup(hass, config):
             attr =  dict(state.attributes)
             if 'activity' not in attr:
                 continue
-            _LOGGER.info(state)
             arr = attr['activity'].split('-')
             prev = device_list[key]
             if  len(arr) == 3 and (prev['latitude'] != attr['latitude'] or prev['longitude'] !=  attr['longitude']):
                 # 如果经纬度不一样，则记录
+                _LOGGER.info(state)
                 device_list[key]['latitude'] = attr['latitude']
                 device_list[key]['longitude'] = attr['longitude']
                 attr['device'] = attr['friendly_name']            
@@ -89,11 +88,8 @@ def setup(hass, config):
                 attr['dist'] = arr[1]
                 attr['starttimestamp'] = arr[2]
                 sql.add(attr)
-       
-       # device_tracker.wo_de_shou_ji
-        
-    track_time_interval(hass, interval, TIME_BETWEEN_UPDATES)
-    
+
+    track_time_interval(hass, interval, TIME_BETWEEN_UPDATES)    
     return True
 
 class HassGateView(HomeAssistantView):
@@ -106,55 +102,14 @@ class HassGateView(HomeAssistantView):
         hass = request.app["hass"]
         try:
             res = await request.json()  
-            _LOGGER.info(res)            
-            if 'api_key' not in res:
-                _LOGGER.info('密钥不存在')
-                return self.json({'code':1, 'msg': '密钥不存在'})
-            
-            if res['api_key'] != API_KEY:
-                _LOGGER.info('密钥错误')
-                return self.json({'code':1, 'msg': '密钥错误'})
-
-            if 'latitude' not in res and 'latitude' not in res and 'longitude' not in res and 'device' not in res:
-                _LOGGER.info('参数不对')
-                return self.json({'code':1, 'msg': '参数不对'})
-                
-            if 'accuracy' not in res:
-                res['accuracy'] = ''
-            if 'battery' not in res:
-                res['battery'] = ''
-            if 'speed' not in res:
-                res['speed'] = ''
-            if 'direction' not in res:
-                res['direction'] = ''
-            if 'altitude' not in res:
-                res['altitude'] = ''
-            if 'activity' not in res:
-                res['activity'] = ''
-            if 'provider' not in res:
-                res['provider'] = ''
-            if 'starttimestamp' not in res:
-                res['starttimestamp'] = ''
-            if 'dist' not in res:
-                res['dist'] = ''
-                
-            sql = hass.data[URL]
-            sql.add(res)
-
-            '''
-            sql.add({
-                'latitude':126.123123123,
-                'longitude':148.234234234234234,
-                'device':'我的设备',
-                'accuracy':'精确',
-                'battery':'电量',
-                'speed':'速度',
-                'direction':'方向',
-                'altitude':'海拔高度',
-                'provider':'供应商',
-                'activity':'活动'
-            })
-            '''
+            _LOGGER.info(res)
+            # 获取同一时刻的GPS记录，生成运动轨迹
+            if res['type'] == 'get':
+                sql = hass.data[URL]
+                _list = sql.query("select * from ha_baidu_map where starttimestamp = '" + sql.filter(res['sts']) + "'")
+                return self.json(_list)
+            # 删除某些时刻的运动轨迹
+            # 删除所有数据
             return self.json(res)
         except Exception as e:
             print(e)
