@@ -8,14 +8,53 @@
 ha_baidu_map:
 
 # 完整配置
+# api_key: 与【GPSLogger应用】通信的密钥（特定uuid格式）
 ha_baidu_map:
   name: 百度地图
   icon: mdi:map-marker-radius
   ak: 百度地图AK密钥
+  api_key: 29689819-3765-47f3-8528-2b1085f0dada
+
+```
+
+## 在GPSLogger应用里的配置（其它参考官方文档）
+```
+
+# HTTP 内容
+# api_key: 百度地图HA组件里配置的api_key，必填项
+
+{
+  "api_key": "29689819-3765-47f3-8528-2b1085f0dada",
+  "latitude": "%LAT",
+  "longitude": "%LON",
+  "device": "我的手机",
+  "accuracy": "%ACC",
+  "battery": "%BATT",
+  "speed": "%SPD",
+  "direction": "%DIR",
+  "altitude": "%ALT",
+  "provider": "%PROV",
+  "activity": "%ACT",
+  "starttimestamp": "%STARTTIMESTAMP",
+  "dist": "%DIST"
+}
+
+
+# HTTP 头
+
+Content-Type: application/json
+
+# HTTP 方法
+
+POST
+
 
 ```
 
 # 更新日志
+
+### v1.0.2
+- 加入数据库存储（目前只支持HA自带的数据库）
 
 ### v1.0
 - 区域设置passive属性为true会自动隐藏（同官方地图）
