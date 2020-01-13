@@ -30,7 +30,7 @@ latitude=%LAT&longitude=%LON&device=我的手机&accuracy=%ACC&battery=%BATT&spe
 
 # 更新日志
 
-### v1.0.4
+### v1.0.4（测试版）
 - 加入数据库存储（目前只支持HA自带的数据库）
 - 加入GPS运动轨迹显示
 

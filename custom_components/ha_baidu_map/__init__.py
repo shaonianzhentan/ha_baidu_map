@@ -78,7 +78,7 @@ def setup(hass, config):
             prev = device_list[key]
             if  len(arr) == 3 and (prev['latitude'] != attr['latitude'] or prev['longitude'] !=  attr['longitude']):
                 # 如果经纬度不一样，则记录
-                _LOGGER.info(state)
+                # _LOGGER.info(state)
                 device_list[key]['latitude'] = attr['latitude']
                 device_list[key]['longitude'] = attr['longitude']
                 attr['device'] = attr['friendly_name']            
