@@ -13,7 +13,7 @@ from homeassistant.components.recorder import CONF_DB_URL, DEFAULT_DB_FILE, DEFA
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 URL = '/ha_baidu_map-api'
 ROOT_PATH = URL + '/' + VERSION
 API_KEY = str(uuid.uuid4())
@@ -57,7 +57,7 @@ def setup(hass, config):
         _name,
         _icon,
         frontend_url_path='ha_baidu_map',
-        config={"ak": _ak},
+        config={"ak": _ak, "url_path": ROOT_PATH},
         require_admin=True)
 
     hass.http.register_view(HassGateView)

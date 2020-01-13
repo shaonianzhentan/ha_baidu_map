@@ -7,37 +7,40 @@ class HaPanelBaiduMap extends HTMLElement {
             <app-toolbar>
             </app-toolbar>
             <div id="baidu-map"></div>
+			<iframe id="gps" class="hide"></iframe>
+			
+			<style>			
+				 app-header, app-toolbar {
+					background-color: var(--primary-color);
+					font-weight: 400;
+					color: var(--text-primary-color, white);
+				}
+				#baidu-map{width:100%;height:calc(100vh - 64px); z-index: 0;}
+				.right-action-panel{text-align:center;}
+				.select-device{padding:2px 0 5px 10px;border:none;max-width:100px;font-size:12px;text-align:center;line-height:23px;background: transparent;}
+				.device-marker{
+				  position:absolute;
+				  vertical-align: top;
+				  display: block;
+				  margin: 0 auto;
+				  width: 2.5em;
+				  text-align: center;
+				  height: 2.5em;
+				  line-height: 2.5em;
+				  font-size: 1.5em;
+				  border-radius: 50%;
+				  border: 0.1em solid var(--ha-marker-color, var(--default-primary-color));
+				  color: rgb(76, 76, 76);
+				  background-color: white;
+				}
+				.hide{display:none;}
+			#gps{width:100%;height:100vh;border:none;position:absolute;top:0;background:white;}
+			</style>
         `
 
         shadow.appendChild(div)
-        // 设置样式
-        const style = document.createElement('style');
-        style.textContent = `
-            app-header, app-toolbar {
-                background-color: var(--primary-color);
-                font-weight: 400;
-                color: var(--text-primary-color, white);
-            }
-            #baidu-map{width:100%;height:calc(100vh - 64px); z-index: 0;}
-            .select-device{padding:2px 0 5px 10px;border:none;max-width:100px;font-size:12px;text-align:center;line-height:23px;}
-            .device-marker{
-              position:absolute;
-              vertical-align: top;
-              display: block;
-              margin: 0 auto;
-              width: 2.5em;
-              text-align: center;
-              height: 2.5em;
-              line-height: 2.5em;
-              font-size: 1.5em;
-              border-radius: 50%;
-              border: 0.1em solid var(--ha-marker-color, var(--default-primary-color));
-              color: rgb(76, 76, 76);
-              background-color: white;
-            }
-        `;
-        shadow.appendChild(style);
         this.shadow = shadow
+		this.$ = shadow.querySelector.bind(shadow)
     }
 
     ready() {
@@ -290,22 +293,50 @@ class HaPanelBaiduMap extends HTMLElement {
         ZoomControl.prototype.initialize = (map) => {
             // 创建一个DOM元素
             var div = document.createElement("div");
+			div.className = 'right-action-panel'
+			div.style.cssText = `background:white;font-size:12px;`
             let select = document.createElement('select')
             select.className = "select-device"
+			
+			// 设备
+			let optgroup = document.createElement('optgroup')
+			optgroup.label = "设备"
             this.deviceList.forEach(ele => {
                 let option = document.createElement('option')
                 option.value = ele.id
                 option.text = ele.name
-                select.appendChild(option)
+                optgroup.appendChild(option)
             })
+			select.appendChild(optgroup)
+			// 功能
+			let optgroupAction = document.createElement('optgroup')
+			optgroupAction.label = "功能"
+            let actionArr = [{id:'a1',name:'GPS运动轨迹' }]
+			actionArr.forEach(ele => {
+                let option = document.createElement('option')
+                option.value = ele.id
+                option.text = ele.name
+                optgroupAction.appendChild(option)
+            })
+			select.appendChild(optgroupAction)
+			
             select.onchange = () => {
                 // 这里重新定位
-                let { longitude, latitude } = this.deviceList[select.selectedIndex]
-                this.translate({ longitude, latitude }).then(res => {
-                    map.centerAndZoom(res[0], 18);
-                })
-
+				if(select.selectedIndex < this.deviceList.length){
+					let { longitude, latitude } = this.deviceList[select.selectedIndex]
+					this.translate({ longitude, latitude }).then(res => {
+						map.centerAndZoom(res[0], 18);
+					})	
+				}else{
+					if(select.value === 'a1'){
+						let gg = this.$('#gps')
+						gg.src = `${this.url_path}/travel.html?r${Date.now()}`
+						gg.classList.toggle('hide')
+					}
+					// console.log(select.value)
+				}
             }
+			
             // 添加文字说明
             div.appendChild(select);
             // 添加DOM元素到地图中
@@ -370,12 +401,23 @@ class HaPanelBaiduMap extends HTMLElement {
 
     set panel(value) {
         this._panel = value
-        let ak = value.config.ak
+		let {ak, url_path} = value.config
+		this.url_path = url_path
         if (ak) {
             if (ak === 'ha_cloud_music') { ak = 'hNT4WeW0AGvh2GuzuO92OfM6hCW25HhX' }
             window.BMAP_PROTOCOL = "https"
             window.BMap_loadScriptTime = (new Date).getTime()
-            this.loadScript(`https://api.map.baidu.com/getscript?v=3.0&ak=${ak}`).then(res => {
+			const _this = this
+			window.BMap_HaBaiduMap = {
+				url: `https://api.map.baidu.com/getscript?v=3.0&ak=${ak}`,
+				close(){
+					let {$} = _this
+					$('.select-device').selectedIndex = 0
+					
+					$('#gps').classList.toggle('hide')
+				}
+			}
+            this.loadScript(BMap_HaBaiduMap.url).then(res => {
                 this.ready()
             })
         } else {

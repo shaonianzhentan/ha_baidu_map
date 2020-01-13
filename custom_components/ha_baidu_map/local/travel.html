@@ -1,0 +1,188 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+		header{height:64px;background-color: #03a9f4;display:flex;color: white;font-size:20px;padding:0 20px;
+			justify-content: space-between;
+		}
+		header select{
+		    border: none;
+			background: transparent;
+			outline:none;
+			color: white;font-size:20px;
+		}
+		header select option{
+			color:#03a9f4;
+		}
+		header span{
+			line-height:64px;
+			cursor:pointer;
+		}
+        #allmap {
+            height: calc(100% - 64px);
+            width: 100%;
+        }
+    </style>
+    <title>GPS运动轨迹</title>
+</head>
+
+<body>
+	<header>
+		<select id="sts">
+		  <option value="">GPS运动轨迹时间</option>
+		</select>
+		<span onclick="closePanel()">关闭</span>
+	</header>
+    <div id="allmap"></div>
+</body>
+
+</html>
+<script type="text/javascript">
+	class HaBaiduMap{
+		constructor(){
+			this.$ = document.querySelector.bind(document)
+			this.loadScript(top.BMap_HaBaiduMap.url).then(()=>{
+				this.init()
+			})
+		}
+		
+		init(){
+			// 百度地图API功能
+			var map = new BMap.Map("allmap");
+			map.enableScrollWheelZoom();
+			this.map = map
+			let {$} = this
+			this.getSTS().then(res=>{
+				let stsEle = $('#sts')
+				res.forEach((ele,index)=>{
+					let option = document.createElement('option')
+					option.text = ele.cdate
+					option.value = ele.sts
+					stsEle.appendChild(option)
+					// 初始化加载数据
+					if(index === 0){
+						this.getList(ele.sts)
+					}
+				})
+				stsEle.onchange = ()=>{
+					if(stsEle.value){
+						map.clearOverlays();
+						this.getList(stsEle.value)
+					}
+				}
+			})
+			
+		}
+		
+		getSTS(){
+			return fetch('/ha_baidu_map-api', {
+				method: 'post',
+				body: JSON.stringify({
+					"type": "get_sts"
+				})
+			}).then(res => res.json())
+		}
+		
+		getList(sts){
+			//读取后台数据.这里直接读取json文件
+			fetch('/ha_baidu_map-api', {
+				method: 'post',
+				body: JSON.stringify({
+					"type": "get_list", sts
+				})
+			}).then(res => res.json()).then(async (data) => {			
+				let {map} = this
+				let runLine = await this.translatePoints(data)
+				//设置地图中心点(已GPS数组中间的点为中心点)
+				var centre = runLine[parseInt(runLine.length / 2)]
+				map.centerAndZoom(centre, 13);
+				var arrPois = runLine;
+				/**添加终点和起点的标记**/
+				this.addMarker(arrPois[0], '起点');
+				this.addMarker(arrPois[arrPois.length - 1], '终点');
+				//创建线路
+				var polyline = new BMap.Polyline(
+					arrPois,//所有的GPS坐标点
+					{
+						strokeColor: "blue", //线路颜色
+						strokeWeight: 4,//线路大小
+						//线路类型(虚线)
+						strokeStyle: "dashed"
+					});
+				//绘制线路
+				map.addOverlay(polyline);
+			})
+		}
+		
+		async translatePoints(arr) {
+			let p = (points) => {
+				return new Promise((resolve, reject) => {
+					var convertor = new BMap.Convertor();
+					convertor.translate(points, 1, 5, function (data) {
+						if (data.status === 0) {
+							resolve(data.points)
+						}
+					})
+				})
+			}
+			let i = 0, k = 0, pointArr = []
+			for await (let item of arr) {
+				if (i % 10 === 0) {
+					let points = []
+					for (let j = k * 10; j < (k + 1) * 10; j++) {
+						let ele = arr[j]
+						if(ele) points.push(new BMap.Point(ele.longitude, ele.latitude))
+					}
+					Array.prototype.push.apply(pointArr, await p(points))
+					k++
+				}
+				i++
+			}
+			return pointArr
+		}
+		
+		addMarker(point, name) {
+			var marker = new BMap.Marker(point);
+			var label = new BMap.Label(name, {
+				offset: new BMap.Size(20, -10)
+			});
+			marker.setLabel(label);
+			this.map.addOverlay(marker);
+		}	
+		
+		loadScript(src) {
+			return new Promise((resolve, reject) => {
+				let id = btoa(src)
+				let ele = document.getElementById(id)
+				if (ele) {
+					resolve()
+					return
+				}
+				let script = document.createElement('script')
+				script.id = id
+				script.src = src
+				script.onload = function () {
+					resolve()
+				}
+				document.querySelector('head').appendChild(script)
+			})
+		}
+	}
+
+   
+    let haMap = new HaBaiduMap()
+	
+	function closePanel(){
+		top.BMap_HaBaiduMap.close()
+	}
+	
+</script>
