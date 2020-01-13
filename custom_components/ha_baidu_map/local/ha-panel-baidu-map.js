@@ -393,8 +393,14 @@ class HaPanelBaiduMap extends HTMLElement {
         })
     }
 
-
-
+	set narrow(value) {
+		let menuButton = this.shadow.querySelector('ha-menu-button')
+		if(menuButton){
+			menuButton.hass = this.hass
+			menuButton.narrow = value
+		}
+    }
+	
     get panel() {
         return this._panel
     }
