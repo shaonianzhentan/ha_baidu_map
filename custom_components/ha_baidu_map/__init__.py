@@ -13,7 +13,7 @@ from homeassistant.components.recorder import CONF_DB_URL, DEFAULT_DB_FILE, DEFA
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '1.0.4'
+VERSION = '1.0.5'
 URL = '/ha_baidu_map-api'
 ROOT_PATH = URL + '/' + VERSION
 API_KEY = str(uuid.uuid4())
