@@ -13,7 +13,7 @@ from homeassistant.components.recorder import CONF_DB_URL, DEFAULT_DB_FILE, DEFA
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '1.0.5'
+VERSION = '1.0.6'
 URL = '/ha_baidu_map-api'
 ROOT_PATH = URL + '/' + VERSION
 API_KEY = str(uuid.uuid4())
@@ -71,6 +71,12 @@ def setup(hass, config):
         global device_list
         for key in device_list:
             state = hass.states.get(key)
+            # 判断是否为空
+            if state is None:
+                continue
+            # 判断是否包含 属性对象
+            if hasattr(state, 'attributes') == False:
+                continue
             attr =  dict(state.attributes)
             if 'activity' not in attr:
                 continue
