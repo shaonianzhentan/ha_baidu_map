@@ -1,106 +1,115 @@
 <html>
 
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-    <style type="text/css">
-        body,
-        html {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            font-family: "微软雅黑";
-        }
-		header{height:64px;background-color: #03a9f4;display:flex;color: white;font-size:20px;padding:0 20px;
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+		body,
+		html {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			font-family: "微软雅黑";
+		}
+
+		header {
+			height: 64px;
+			background-color: #03a9f4;
+			display: flex;
+			color: white;
+			font-size: 20px;
+			padding: 0 20px;
 			justify-content: space-between;
 		}
-		header select{
-		    border: none;
+
+		header select {
+			border: none;
 			background: transparent;
-			outline:none;
-			color: white;font-size:20px;
+			outline: none;
+			color: white;
+			font-size: 20px;
 		}
-		header select option{
-			color:#03a9f4;
+		header select optgroup{color:#555;font-weight: bold;}
+		header select option {
+			color: #03a9f4;
 		}
-		header span{
-			line-height:64px;
-			cursor:pointer;
+		header span {
+			line-height: 64px;
+			cursor: pointer;
 		}
-        #allmap {
-            height: calc(100% - 64px);
-            width: 100%;
-        }
-    </style>
-    <title>GPS运动轨迹</title>
+
+		#allmap {
+			height: calc(100% - 64px);
+			width: 100%;
+		}
+	</style>
+	<title>GPS运动轨迹</title>
 </head>
 
 <body>
 	<header>
 		<select id="sts">
-		  <option value="">GPS运动轨迹时间</option>
+			<option value="">GPS运动轨迹时间</option>
 		</select>
 		<span onclick="closePanel()">关闭</span>
 	</header>
-    <div id="allmap"></div>
+	<div id="allmap"></div>
 </body>
 
 </html>
 <script type="text/javascript">
-	class HaBaiduMap{
-		constructor(){
+	class HaBaiduMap {
+		constructor() {
 			this.$ = document.querySelector.bind(document)
-			this.loadScript(top.BMap_HaBaiduMap.url).then(()=>{
+			this.loadScript(top.BMap_HaBaiduMap.url).then(() => {
 				this.init()
 			})
 		}
-		
-		init(){
+
+		init() {
 			// 百度地图API功能
 			var map = new BMap.Map("allmap");
 			map.enableScrollWheelZoom();
 			this.map = map
-			let {$} = this
-			this.getSTS().then(res=>{
+			let { $ } = this
+			this.http({
+				"type": "get_list"
+			}).then(res => {
 				let stsEle = $('#sts')
-				res.forEach((ele,index)=>{
-					let option = document.createElement('option')
-					option.text = ele.cdate
-					option.value = ele.sts
-					stsEle.appendChild(option)
+				let isInitData = false
+				res.forEach((ele, index) => {
+					let optgroup = document.createElement('optgroup')
+					optgroup.label = ele.name
+					ele.list.forEach(({ sts, cdate }) => {
+						let option = document.createElement('option')
+						option.text = cdate
+						option.value = sts
+						optgroup.appendChild(option)
+					})
+					stsEle.appendChild(optgroup)
 					// 初始化加载数据
-					if(index === 0){
-						this.getList(ele.sts)
+					if (!isInitData && ele.list.length > 0) {
+						isInitData = true
+						this.getInfo(ele.name + '/' + ele.list[0].sts)
 					}
 				})
-				stsEle.onchange = ()=>{
-					if(stsEle.value){
+				stsEle.onchange = () => {
+					if (stsEle.value) {
 						map.clearOverlays();
-						this.getList(stsEle.value)
+						// console.log('%O', stsEle)
+						this.getInfo(stsEle.selectedOptions[0].parentNode.label + '/' + stsEle.value)
 					}
 				}
 			})
-			
 		}
-		
-		getSTS(){
-			return fetch('/ha_baidu_map-api', {
-				method: 'post',
-				body: JSON.stringify({
-					"type": "get_sts"
-				})
-			}).then(res => res.json())
-		}
-		
-		getList(sts){
+
+		getInfo(sts) {
 			//读取后台数据.这里直接读取json文件
-			fetch('/ha_baidu_map-api', {
-				method: 'post',
-				body: JSON.stringify({
-					"type": "get_list", sts
-				})
-			}).then(res => res.json()).then(async (data) => {			
-				let {map} = this
+			this.http({
+				"type": "get_info", 
+				sts
+			}).then(async (data) => {
+				let { map } = this
 				let runLine = await this.translatePoints(data)
 				//设置地图中心点(已GPS数组中间的点为中心点)
 				var centre = runLine[parseInt(runLine.length / 2)]
@@ -122,7 +131,7 @@
 				map.addOverlay(polyline);
 			})
 		}
-		
+
 		async translatePoints(arr) {
 			let p = (points) => {
 				return new Promise((resolve, reject) => {
@@ -140,7 +149,7 @@
 					let points = []
 					for (let j = k * 10; j < (k + 1) * 10; j++) {
 						let ele = arr[j]
-						if(ele) points.push(new BMap.Point(ele.longitude, ele.latitude))
+						if (ele) points.push(new BMap.Point(ele.longitude, ele.latitude))
 					}
 					Array.prototype.push.apply(pointArr, await p(points))
 					k++
@@ -149,7 +158,7 @@
 			}
 			return pointArr
 		}
-		
+
 		addMarker(point, name) {
 			var marker = new BMap.Marker(point);
 			var label = new BMap.Label(name, {
@@ -157,8 +166,32 @@
 			});
 			marker.setLabel(label);
 			this.map.addOverlay(marker);
-		}	
-		
+		}
+
+		async http(params) {
+			this.loading = true
+			try {
+				let hass = top.document.querySelector('home-assistant').hass
+				let { expired } = hass.auth
+				// 过期
+				if (expired) {
+					await hass.auth.refreshAccessToken()
+				}
+				return fetch(`${top.location.pathname}-api`, {
+					method: 'post',
+					headers: {
+						authorization: `${hass.auth.data.token_type} ${hass.auth.accessToken}`
+					},
+					body: JSON.stringify(params)
+				}).then(res => res.json()).finally(() => {
+					this.loading = false
+				})
+			} catch (ex) {
+				this.loading = false
+				return Promise.reject(ex)
+			}
+		}
+
 		loadScript(src) {
 			return new Promise((resolve, reject) => {
 				let id = btoa(src)
@@ -178,11 +211,11 @@
 		}
 	}
 
-   
-    let haMap = new HaBaiduMap()
-	
-	function closePanel(){
+
+	let haMap = new HaBaiduMap()
+
+	function closePanel() {
 		top.BMap_HaBaiduMap.close()
 	}
-	
+
 </script>
