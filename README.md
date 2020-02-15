@@ -30,6 +30,11 @@ latitude=%LAT&longitude=%LON&device=我的手机&accuracy=%ACC&battery=%BATT&spe
 
 # 更新日志
 
+### v2.0
+- 修改为本地json文件存储（文件在.storage/ha_baidu_map/）
+- 支持多设备分类记录
+- 修复设备多次重复记录问题
+
 ### v1.0.5
 - 修复菜单图标一直显示的问题
 
