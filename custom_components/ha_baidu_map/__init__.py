@@ -19,6 +19,7 @@ def setup(hass, config):
     _icon = cfg.get('icon', 'mdi:map-marker-radius')
     _ak = cfg.get("ak", 'ha_cloud_music')
     record = cfg.get('record', [])
+    map_hidden = cfg.get('map', 'hidden')
         
     # 注册静态目录
     local = hass.config.path("custom_components/" + DOMAIN + "/local")
@@ -26,7 +27,7 @@ def setup(hass, config):
         hass.http.register_static_path(ROOT_PATH, local, False)
 
     hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/ha-panel-baidu-map.js')
-
+    
     _LOGGER.info('''
 -------------------------------------------------------------------
 
@@ -51,6 +52,14 @@ def setup(hass, config):
     
     # 定时器
     def interval(now):
+        # 隐藏原始地图
+        if map_hidden == 'hidden':
+            DATA_PANELS = 'frontend_panels'
+            panel = hass.data.get(DATA_PANELS, {})
+            if 'map' in panel:
+                hass.components.frontend.async_remove_panel("map")
+                print('删除自带地图')
+                
         # 读取设备信息
         for key in record:
             state = hass.states.get(key)
@@ -80,6 +89,7 @@ def setup(hass, config):
                 sql.add(key, attr)
 
     track_time_interval(hass, interval, TIME_BETWEEN_UPDATES)    
+        
     return True
 
 class HassGateView(HomeAssistantView):

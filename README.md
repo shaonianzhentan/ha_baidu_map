@@ -9,10 +9,12 @@ ha_baidu_map:
 
 # 完整配置
 # record: 要记录使用GPSLogger的设备
+# map: hidden（侧边栏隐藏自带的地图）
 ha_baidu_map:
   name: 百度地图
   icon: mdi:map-marker-radius
   ak: 百度地图AK密钥
+  map: hidden
   record:
     - device_tracker.wo_de_shou_ji
 
@@ -34,6 +36,7 @@ latitude=%LAT&longitude=%LON&device=我的手机&accuracy=%ACC&battery=%BATT&spe
 - 修改为本地json文件存储（文件在.storage/ha_baidu_map/）
 - 支持多设备分类记录
 - 修复设备多次重复记录问题
+- 支持配置隐藏自带地图
 
 ### v1.0.5
 - 修复菜单图标一直显示的问题
