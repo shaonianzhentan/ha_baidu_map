@@ -19,7 +19,7 @@ def setup(hass, config):
     _icon = cfg.get('icon', 'mdi:map-marker-radius')
     _ak = cfg.get("ak", 'ha_cloud_music')
     record = cfg.get('record', [])
-    map_hidden = cfg.get('map', 'hidden')
+    map_hidden = cfg.get('map', '')
         
     # 注册静态目录
     local = hass.config.path("custom_components/" + DOMAIN + "/local")
