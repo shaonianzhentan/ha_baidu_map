@@ -29,10 +29,16 @@
 			color: white;
 			font-size: 20px;
 		}
-		header select optgroup{color:#555;font-weight: bold;}
+
+		header select optgroup {
+			color: #555;
+			font-weight: bold;
+		}
+
 		header select option {
 			color: #03a9f4;
 		}
+
 		header span {
 			line-height: 64px;
 			cursor: pointer;
@@ -54,168 +60,173 @@
 		<span onclick="closePanel()">关闭</span>
 	</header>
 	<div id="allmap"></div>
+	<script type="text/javascript">
+		class HaBaiduMap {
+			constructor() {
+				this.$ = document.querySelector.bind(document)
+				window.BMAP_PROTOCOL = "https"
+				window.BMap_loadScriptTime = (new Date).getTime()				
+				this.loadScript(top.BMap_HaBaiduMap.url).then(() => {
+					this.init()
+				})
+			}
+
+			init() {
+				// 百度地图API功能
+				var map = new BMap.Map("allmap");
+				map.enableScrollWheelZoom();
+				this.map = map
+				let { $ } = this
+				this.http({
+					"type": "get_list"
+				}).then(res => {
+					let stsEle = $('#sts')
+					let isInitData = false
+					res.forEach((ele, index) => {
+						let optgroup = document.createElement('optgroup')
+						optgroup.label = ele.name
+						ele.list.forEach(({ sts, cdate }) => {
+							let option = document.createElement('option')
+							option.text = cdate
+							option.value = sts
+							optgroup.appendChild(option)
+						})
+						stsEle.appendChild(optgroup)
+						// 初始化加载数据
+						if (!isInitData && ele.list.length > 0) {
+							isInitData = true
+							this.getInfo(ele.name + '/' + ele.list[0].sts)
+						}
+					})
+					stsEle.onchange = () => {
+						if (stsEle.value) {
+							map.clearOverlays();
+							// console.log('%O', stsEle)
+							this.getInfo(stsEle.selectedOptions[0].parentNode.label + '/' + stsEle.value)
+						}
+					}
+				})
+			}
+
+			getInfo(sts) {
+				//读取后台数据.这里直接读取json文件
+				this.http({
+					"type": "get_info",
+					sts
+				}).then(async (data) => {
+					let { map } = this
+					let runLine = await this.translatePoints(data)
+					//设置地图中心点(已GPS数组中间的点为中心点)
+					var centre = runLine[parseInt(runLine.length / 2)]
+					map.centerAndZoom(centre, 13);
+					var arrPois = runLine;
+					/**添加终点和起点的标记**/
+					this.addMarker(arrPois[0], '起点');
+					this.addMarker(arrPois[arrPois.length - 1], '终点');
+					//创建线路
+					var polyline = new BMap.Polyline(
+						arrPois,//所有的GPS坐标点
+						{
+							strokeColor: "blue", //线路颜色
+							strokeWeight: 4,//线路大小
+							//线路类型(虚线)
+							strokeStyle: "dashed"
+						});
+					//绘制线路
+					map.addOverlay(polyline);
+				})
+			}
+
+			async translatePoints(arr) {
+				let p = (points) => {
+					return new Promise((resolve, reject) => {
+						var convertor = new BMap.Convertor();
+						convertor.translate(points, 1, 5, function (data) {
+							if (data.status === 0) {
+								resolve(data.points)
+							}
+						})
+					})
+				}
+				let i = 0, k = 0, pointArr = []
+				for await (let item of arr) {
+					if (i % 10 === 0) {
+						let points = []
+						for (let j = k * 10; j < (k + 1) * 10; j++) {
+							let ele = arr[j]
+							if (ele) points.push(new BMap.Point(ele.longitude, ele.latitude))
+						}
+						Array.prototype.push.apply(pointArr, await p(points))
+						k++
+					}
+					i++
+				}
+				return pointArr
+			}
+
+			addMarker(point, name) {
+				var marker = new BMap.Marker(point);
+				var label = new BMap.Label(name, {
+					offset: new BMap.Size(20, -10)
+				});
+				marker.setLabel(label);
+				this.map.addOverlay(marker);
+			}
+
+			async http(params) {
+				this.loading = true
+				try {
+					let hass = top.document.querySelector('home-assistant').hass
+					let { expired } = hass.auth
+					// 过期
+					if (expired) {
+						await hass.auth.refreshAccessToken()
+					}
+					return fetch(`${top.location.pathname}-api`, {
+						method: 'post',
+						headers: {
+							authorization: `${hass.auth.data.token_type} ${hass.auth.accessToken}`
+						},
+						body: JSON.stringify(params)
+					}).then(res => res.json()).finally(() => {
+						this.loading = false
+					})
+				} catch (ex) {
+					this.loading = false
+					return Promise.reject(ex)
+				}
+			}
+
+			loadScript(src) {
+				return new Promise((resolve, reject) => {
+					let id = btoa(src)
+					let ele = document.getElementById(id)
+					if (ele) {
+						resolve()
+						return
+					}
+					let script = document.createElement('script')
+					script.id = id
+					script.src = src
+					script.onload = function () {
+						resolve()
+					}
+					document.querySelector('head').appendChild(script)
+				})
+			}
+		}
+
+
+		let haMap = new HaBaiduMap()
+
+		function closePanel() {
+			top.BMap_HaBaiduMap.close()
+		}
+
+	</script>
+	<script>var _hmt = _hmt || []; window._hmt = _hmt; (function () { var hm = document.createElement('script'); hm.src = 'https://hm.baidu.com/hm.js?52d57d8b7588a022f89c451d06e311f0'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(hm, s) })();</script>
+
+
 </body>
 
 </html>
-<script type="text/javascript">
-	class HaBaiduMap {
-		constructor() {
-			this.$ = document.querySelector.bind(document)
-			this.loadScript(top.BMap_HaBaiduMap.url).then(() => {
-				this.init()
-			})
-		}
-
-		init() {
-			// 百度地图API功能
-			var map = new BMap.Map("allmap");
-			map.enableScrollWheelZoom();
-			this.map = map
-			let { $ } = this
-			this.http({
-				"type": "get_list"
-			}).then(res => {
-				let stsEle = $('#sts')
-				let isInitData = false
-				res.forEach((ele, index) => {
-					let optgroup = document.createElement('optgroup')
-					optgroup.label = ele.name
-					ele.list.forEach(({ sts, cdate }) => {
-						let option = document.createElement('option')
-						option.text = cdate
-						option.value = sts
-						optgroup.appendChild(option)
-					})
-					stsEle.appendChild(optgroup)
-					// 初始化加载数据
-					if (!isInitData && ele.list.length > 0) {
-						isInitData = true
-						this.getInfo(ele.name + '/' + ele.list[0].sts)
-					}
-				})
-				stsEle.onchange = () => {
-					if (stsEle.value) {
-						map.clearOverlays();
-						// console.log('%O', stsEle)
-						this.getInfo(stsEle.selectedOptions[0].parentNode.label + '/' + stsEle.value)
-					}
-				}
-			})
-		}
-
-		getInfo(sts) {
-			//读取后台数据.这里直接读取json文件
-			this.http({
-				"type": "get_info", 
-				sts
-			}).then(async (data) => {
-				let { map } = this
-				let runLine = await this.translatePoints(data)
-				//设置地图中心点(已GPS数组中间的点为中心点)
-				var centre = runLine[parseInt(runLine.length / 2)]
-				map.centerAndZoom(centre, 13);
-				var arrPois = runLine;
-				/**添加终点和起点的标记**/
-				this.addMarker(arrPois[0], '起点');
-				this.addMarker(arrPois[arrPois.length - 1], '终点');
-				//创建线路
-				var polyline = new BMap.Polyline(
-					arrPois,//所有的GPS坐标点
-					{
-						strokeColor: "blue", //线路颜色
-						strokeWeight: 4,//线路大小
-						//线路类型(虚线)
-						strokeStyle: "dashed"
-					});
-				//绘制线路
-				map.addOverlay(polyline);
-			})
-		}
-
-		async translatePoints(arr) {
-			let p = (points) => {
-				return new Promise((resolve, reject) => {
-					var convertor = new BMap.Convertor();
-					convertor.translate(points, 1, 5, function (data) {
-						if (data.status === 0) {
-							resolve(data.points)
-						}
-					})
-				})
-			}
-			let i = 0, k = 0, pointArr = []
-			for await (let item of arr) {
-				if (i % 10 === 0) {
-					let points = []
-					for (let j = k * 10; j < (k + 1) * 10; j++) {
-						let ele = arr[j]
-						if (ele) points.push(new BMap.Point(ele.longitude, ele.latitude))
-					}
-					Array.prototype.push.apply(pointArr, await p(points))
-					k++
-				}
-				i++
-			}
-			return pointArr
-		}
-
-		addMarker(point, name) {
-			var marker = new BMap.Marker(point);
-			var label = new BMap.Label(name, {
-				offset: new BMap.Size(20, -10)
-			});
-			marker.setLabel(label);
-			this.map.addOverlay(marker);
-		}
-
-		async http(params) {
-			this.loading = true
-			try {
-				let hass = top.document.querySelector('home-assistant').hass
-				let { expired } = hass.auth
-				// 过期
-				if (expired) {
-					await hass.auth.refreshAccessToken()
-				}
-				return fetch(`${top.location.pathname}-api`, {
-					method: 'post',
-					headers: {
-						authorization: `${hass.auth.data.token_type} ${hass.auth.accessToken}`
-					},
-					body: JSON.stringify(params)
-				}).then(res => res.json()).finally(() => {
-					this.loading = false
-				})
-			} catch (ex) {
-				this.loading = false
-				return Promise.reject(ex)
-			}
-		}
-
-		loadScript(src) {
-			return new Promise((resolve, reject) => {
-				let id = btoa(src)
-				let ele = document.getElementById(id)
-				if (ele) {
-					resolve()
-					return
-				}
-				let script = document.createElement('script')
-				script.id = id
-				script.src = src
-				script.onload = function () {
-					resolve()
-				}
-				document.querySelector('head').appendChild(script)
-			})
-		}
-	}
-
-
-	let haMap = new HaBaiduMap()
-
-	function closePanel() {
-		top.BMap_HaBaiduMap.close()
-	}
-
-</script>
