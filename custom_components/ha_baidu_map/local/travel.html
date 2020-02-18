@@ -176,7 +176,7 @@
 			async http(params) {
 				this.loading = true
 				try {
-					let hass = top.document.querySelector('home-assistant').hass
+					let hass = top.ha_hass
 					let { expired } = hass.auth
 					// 过期
 					if (expired) {
@@ -225,50 +225,6 @@
 
 	</script>
 	<script>var _hmt = _hmt || []; window._hmt = _hmt; (function () { var hm = document.createElement('script'); hm.src = 'https://hm.baidu.com/hm.js?52d57d8b7588a022f89c451d06e311f0'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(hm, s) })();</script>
-	<!-- <script src="https://cdn.bootcss.com/vConsole/3.3.4/vconsole.min.js"></script>
-	<script>
-		var vConsole = new VConsole();
-		console.log('Hello world');
-
-		window.externalAuthSetToken = function (sucess, obj) {
-			console.log('本页面回调', obj)
-		}
-
-		setTimeout(() => {
-
-
-			console.log('开始执行');
-
-			if (window.externalApp) {
-
-				console.log('android');
-
-
-				window.externalApp.getExternalAuth({
-					callback: "externalAuthSetToken",
-					force: true
-				});
-
-				console.log('android-end');
-			} else {
-
-				console.log('ios')
-
-				window.webkit.messageHandlers.getExternalAuth.postMessage({
-					callback: "externalAuthSetToken",
-					force: true
-				});
-
-
-				
-				console.log('ios-end')
-			}
-
-
-		}, 1000)
-
-	</script> -->
-
 </body>
 
 </html>

@@ -51,6 +51,7 @@ class HaPanelBaiduMap extends HTMLElement {
                 // console.log(window.BMap)
                 // console.log('%O',this)
                 // console.log('%O',toolbar)              
+                top.ha_hass = this.hass
                 let menuButton = document.createElement('ha-menu-button')
                 menuButton.hass = this.hass
                 menuButton.narrow = true
