@@ -1,6 +1,9 @@
 # 百度地图
 在HA里使用的百度地图，支持GPS定位轨迹显示
 
+# 注意事项
+- 如果你不使用GPSLogger定位设备，参数中则完全不需要声明record的值
+
 # 使用方式
 
 ```
@@ -8,7 +11,7 @@
 ha_baidu_map:
 
 # 完整配置
-# record: 要记录使用GPSLogger的设备
+# record: 要记录使用GPSLogger的设备（在使用GPSLogger定位时配置使用）
 # map: hidden（侧边栏隐藏自带的地图）
 ha_baidu_map:
   name: 百度地图
