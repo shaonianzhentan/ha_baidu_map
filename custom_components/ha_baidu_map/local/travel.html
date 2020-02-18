@@ -65,7 +65,7 @@
 			constructor() {
 				this.$ = document.querySelector.bind(document)
 				window.BMAP_PROTOCOL = "https"
-				window.BMap_loadScriptTime = (new Date).getTime()				
+				window.BMap_loadScriptTime = (new Date).getTime()
 				this.loadScript(top.BMap_HaBaiduMap.url).then(() => {
 					this.init()
 				})
@@ -225,7 +225,34 @@
 
 	</script>
 	<script>var _hmt = _hmt || []; window._hmt = _hmt; (function () { var hm = document.createElement('script'); hm.src = 'https://hm.baidu.com/hm.js?52d57d8b7588a022f89c451d06e311f0'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(hm, s) })();</script>
+	<script src="https://cdn.bootcss.com/vConsole/3.3.4/vconsole.min.js"></script>
+	<script>
+		var vConsole = new VConsole();
+		console.log('Hello world');
 
+		if (top.externalApp) {
+			top.externalApp.getExternalAuth({
+				callback: "externalAuthSetToken",
+				force: true
+			});
+
+			console.log('android');
+		} else {
+			top.webkit.messageHandlers.getExternalAuth.postMessage({
+				callback: "externalAuthSetToken",
+				force: true
+			});
+			console.log('ios')
+		}
+
+		function externalAuthSetToken(obj){
+			console.log('本页面回调', obj)
+		}
+		
+		top.externalAuthSetToken = function(obj){
+			console.log('top回调', obj)
+		}
+	</script>
 
 </body>
 
