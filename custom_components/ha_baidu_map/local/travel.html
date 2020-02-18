@@ -186,7 +186,7 @@
 					let auth = hass.auth
 					let authorization = ''
 					// app端
-					if (!auth._saveTokens) {
+					if (auth._saveTokens) {
 						console.log('web')
 						// 过期
 						if (auth.expired) {
