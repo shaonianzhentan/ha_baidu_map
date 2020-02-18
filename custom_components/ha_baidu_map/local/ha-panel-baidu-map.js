@@ -331,7 +331,7 @@ class HaPanelBaiduMap extends HTMLElement {
 				}else{
 					if(select.value === 'a1'){
 						let gg = this.$('#gps')
-						gg.src = `${this.url_path}/travel.html?external_auth=1&r=${Date.now()}`
+						gg.src = `${this.url_path}/travel.html?r=${Date.now()}`
 						gg.classList.toggle('hide')
 					}
 					// console.log(select.value)
