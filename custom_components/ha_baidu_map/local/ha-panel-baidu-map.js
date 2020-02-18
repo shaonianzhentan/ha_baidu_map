@@ -203,9 +203,6 @@ class HaPanelBaiduMap extends HTMLElement {
               div.onclick = function(){
                 _this.fire('hass-more-info', { entityId: id })
               }
-              div.ontap = function(){
-                _this.fire('hass-more-info', { entityId: id })
-              }
               map.getPanes().labelPane.appendChild(div);
               return div;
             }
