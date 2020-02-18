@@ -197,6 +197,8 @@
 						console.log('app')
 						authorization = `Bearer ${auth.data.access_token}`
 					}
+					console.log(hass)
+					console.log(auth)
 					console.log(`${top.location.pathname}-api`)
 					console.log(authorization)
 					return fetch(`${top.location.pathname}-api`, {
