@@ -186,14 +186,16 @@
 					let auth = hass.auth
 					let authorization = ''
 					// app端
-					if(hass.external){
-						authorization = `Bearer ${auth.data.access_token}`
-					}else{
+					if ('expired' in auth) {
+						console.log('web')
 						// 过期
 						if (auth.expired) {
 							await auth.refreshAccessToken()
 						}
 						authorization = `${auth.data.token_type} ${auth.accessToken}`
+					} else {
+						console.log('app')
+						authorization = `Bearer ${auth.data.access_token}`
 					}
 					console.log(`${top.location.pathname}-api`)
 					console.log(authorization)
