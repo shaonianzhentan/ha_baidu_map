@@ -94,6 +94,14 @@ class HaPanelBaiduMap extends HTMLElement {
                 mp.addControl(top_left_navigation);     
                 mp.addControl(top_right_navigation);    
                 */
+               //触摸事件(解决点击事件无效)--触摸开始，开启拖拽
+				map.addEventListener('touchmove', function(e) {
+					map.enableDragging();
+				});
+				//触摸结束始，禁止拖拽
+				map.addEventListener("touchend", function(e) {
+					map.disableDragging();
+				});
             } else {
                 this.loadDevice()
             }
