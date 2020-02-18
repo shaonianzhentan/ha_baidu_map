@@ -230,7 +230,16 @@
 		var vConsole = new VConsole();
 		console.log('Hello world');
 
-		setTimeout(()=>{
+		window.externalAuthSetToken = function (sucess, obj) {
+			console.log('本页面回调', obj)
+		}
+
+		top.externalAuthSetToken = function (sucess, obj) {
+			console.log('top回调', obj)
+		}
+
+
+		setTimeout(() => {
 
 
 			console.log('开始执行');
@@ -249,8 +258,9 @@
 					force: true
 				});
 
+				console.log('android-end');
 			} else {
-				
+
 				console.log('ios')
 
 				top.webkit.messageHandlers.getExternalAuth.postMessage({
@@ -262,17 +272,13 @@
 					callback: "externalAuthSetToken",
 					force: true
 				});
+
+				
+				console.log('ios-end')
 			}
 
-			window.externalAuthSetToken = function(sucess, obj){
-				console.log('本页面回调', obj)
-			}
 
-			top.externalAuthSetToken = function(sucess, obj){
-				console.log('top回调', obj)
-			}
-
-		},1000)
+		}, 1000)
 
 	</script>
 
