@@ -234,24 +234,15 @@
 			console.log('本页面回调', obj)
 		}
 
-		top.externalAuthSetToken = function (sucess, obj) {
-			console.log('top回调', obj)
-		}
-
-
 		setTimeout(() => {
 
 
 			console.log('开始执行');
 
-			if (top.externalApp) {
+			if (window.externalApp) {
 
 				console.log('android');
 
-				top.externalApp.getExternalAuth({
-					callback: "externalAuthSetToken",
-					force: true
-				});
 
 				window.externalApp.getExternalAuth({
 					callback: "externalAuthSetToken",
@@ -263,15 +254,11 @@
 
 				console.log('ios')
 
-				top.webkit.messageHandlers.getExternalAuth.postMessage({
-					callback: "externalAuthSetToken",
-					force: true
-				});
-
 				window.webkit.messageHandlers.getExternalAuth.postMessage({
 					callback: "externalAuthSetToken",
 					force: true
 				});
+
 
 				
 				console.log('ios-end')
