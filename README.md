@@ -35,6 +35,9 @@ latitude=%LAT&longitude=%LON&device=我的手机&accuracy=%ACC&battery=%BATT&spe
 
 # 更新日志
 
+### v2.2
+- 修复在HA的APP中无法加载GPS轨迹的问题
+
 ### v2.1
 - 修复https下无法加载接口的问题
 

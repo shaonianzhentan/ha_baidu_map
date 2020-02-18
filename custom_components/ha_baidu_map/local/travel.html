@@ -50,14 +50,7 @@
 		}
 	</style>
 	<title>GPS运动轨迹</title>
-	<script src="https://cdn.bootcss.com/vConsole/3.3.4/vconsole.min.js"></script>
-	<script>
-		var vConsole = new VConsole();
-		console.log('Hello world');
-	</script>
-
 </head>
-
 <body>
 	<header>
 		<select id="sts">
@@ -186,20 +179,14 @@
 					let auth = hass.auth
 					let authorization = ''
 					if (auth._saveTokens) {
-						console.log('web')
 						// 过期
 						if (auth.expired) {
 							await auth.refreshAccessToken()
 						}
 						authorization = `${auth.data.token_type} ${auth.accessToken}`
 					} else {
-						console.log('app')
 						authorization = `Bearer ${auth.data.access_token}`
 					}
-					console.log(hass)
-					console.log(auth)
-					console.log(`${top.location.pathname}-api`)
-					console.log(authorization)
 					return fetch(`${top.location.pathname}-api`, {
 						method: 'post',
 						headers: {
