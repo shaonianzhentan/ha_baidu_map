@@ -7,7 +7,7 @@ from .api_storage import ApiStorage
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '2.2.2'
+VERSION = '2.2'
 URL = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 # 定时器时间
