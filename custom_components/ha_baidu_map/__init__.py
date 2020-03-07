@@ -7,7 +7,7 @@ from .api_storage import ApiStorage
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '2.2'
+VERSION = '2.2.1'
 URL = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 # 定时器时间
@@ -70,7 +70,7 @@ def setup(hass, config):
             if hasattr(state, 'attributes') == False:
                 continue
             attr =  dict(state.attributes)
-            if 'activity' not in attr:
+            if 'activity' not in attr or attr['activity'] is None:
                 continue
             arr = attr['activity'].split('-')
             # 如果是特定格式，则添加数据
