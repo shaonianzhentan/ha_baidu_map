@@ -40,7 +40,7 @@ class HaPanelBaiduMap extends HTMLElement {
 
         shadow.appendChild(div)
         this.shadow = shadow
-		this.$ = shadow.querySelector.bind(shadow)
+        this.$ = shadow.querySelector.bind(shadow)
     }
 
     ready() {
@@ -52,15 +52,26 @@ class HaPanelBaiduMap extends HTMLElement {
                 // console.log('%O',this)
                 // console.log('%O',toolbar)              
                 top.ha_hass = this.hass
+                // 添加菜单
                 let menuButton = document.createElement('ha-menu-button')
                 menuButton.hass = this.hass
                 menuButton.narrow = true
                 toolbar.appendChild(menuButton)
-
+                // 添加标题
                 let title = document.createElement('div')
                 title.setAttribute('main-title', '')
                 title.textContent = '百度地图'
                 toolbar.appendChild(title)
+                // 添加编辑图标
+                let haIconButton = document.createElement('ha-icon-button')
+                haIconButton.setAttribute('icon', 'hass:pencil')
+                haIconButton.setAttribute('title', '编辑位置')
+                haIconButton.onclick = () => {
+                    history.pushState(null, null, '/config/zone')
+                    this.fire('location-changed')
+                }
+                toolbar.appendChild(haIconButton)
+
                 // 获取当前HA配置的经纬度
                 let { latitude, longitude } = this.hass.config
                 // 生成一个对象
@@ -94,55 +105,55 @@ class HaPanelBaiduMap extends HTMLElement {
                 mp.addControl(top_left_navigation);     
                 mp.addControl(top_right_navigation);    
                 */
-               //触摸事件(解决点击事件无效)--触摸开始，开启拖拽
-				map.addEventListener('touchmove', function(e) {
-					map.enableDragging();
-				});
-				//触摸结束始，禁止拖拽
-				map.addEventListener("touchend", function(e) {
-					map.disableDragging();
-				});
+                //触摸事件(解决点击事件无效)--触摸开始，开启拖拽
+                map.addEventListener('touchmove', function (e) {
+                    map.enableDragging();
+                });
+                //触摸结束始，禁止拖拽
+                map.addEventListener("touchend", function (e) {
+                    map.disableDragging();
+                });
             } else {
                 this.loadDevice()
             }
         }
     }
-    
+
     /**************************** 加载区域 ********************************/
-    
+
     // 添加Icon标记
-    addIconMarker(point, icon, key){
+    addIconMarker(point, icon, key) {
         let _this = this
-        const map = this.map        
+        const map = this.map
         // 复杂的自定义覆盖物
-        function ComplexCustomOverlay(){}
-        
+        function ComplexCustomOverlay() { }
+
         ComplexCustomOverlay.prototype = new BMap.Overlay();
-        ComplexCustomOverlay.prototype.initialize = function(map){
-          this._map = map;
-          var div = this._div = document.createElement("div");
-          div.style.position = "absolute";
-          div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
-          div.style.MozUserSelect = "none";
-          div.innerHTML = `<iron-icon icon="${icon}"></iron-icon>`
-          map.getPanes().labelPane.appendChild(div);
-          div.onclick = function(){
-            _this.fire('hass-more-info', { entityId: key })
-          }
-          return div;
+        ComplexCustomOverlay.prototype.initialize = function (map) {
+            this._map = map;
+            var div = this._div = document.createElement("div");
+            div.style.position = "absolute";
+            div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
+            div.style.MozUserSelect = "none";
+            div.innerHTML = `<ha-icon icon="${icon}"></ha-icon>`
+            map.getPanes().labelPane.appendChild(div);
+            div.onclick = function () {
+                _this.fire('hass-more-info', { entityId: key })
+            }
+            return div;
         }
-        ComplexCustomOverlay.prototype.draw = function(){
-          var pixel = map.pointToOverlayPixel(point);
-          this._div.style.left = pixel.x - 12 + "px";
-          this._div.style.top  = pixel.y - 12 + "px";
+        ComplexCustomOverlay.prototype.draw = function () {
+            var pixel = map.pointToOverlayPixel(point);
+            this._div.style.left = pixel.x - 12 + "px";
+            this._div.style.top = pixel.y - 12 + "px";
         }
         var myCompOverlay = new ComplexCustomOverlay();
-        
+
         map.addOverlay(myCompOverlay);
     }
-    
+
     //加载区域
-    loadZone(){
+    loadZone() {
         let map = this.map
         this.debounce(async () => {
             // 这里添加设备
@@ -166,60 +177,60 @@ class HaPanelBaiduMap extends HTMLElement {
             this.loadDevice()
         }, 1000)
     }
-    
+
     /**************************** 加载设备 ********************************/
-    
+
     // 添加设备标记
-    addEntityMarker(point, { id, name, picture}){
+    addEntityMarker(point, { id, name, picture }) {
         let _this = this
-        const map = this.map 
-        
+        const map = this.map
+
         // 删除所有设备
         let allOverlay = map.getOverlays();
         if (allOverlay.length > 0) {
-            let index = allOverlay.findIndex(ele=>ele['id']===id)
-            if(index >= 0){
+            let index = allOverlay.findIndex(ele => ele['id'] === id)
+            if (index >= 0) {
                 map.removeOverlay(allOverlay[index]);
             }
         }
         // console.log(allOverlay)
-        setTimeout(()=>{
+        setTimeout(() => {
             // 复杂的自定义覆盖物
-            function ComplexCustomOverlay(){}
-            
+            function ComplexCustomOverlay() { }
+
             ComplexCustomOverlay.prototype = new BMap.Overlay();
-            ComplexCustomOverlay.prototype.initialize = function(map){
-              this._map = map;
-              var div = this._div = document.createElement("div");
-              div.className = "device-marker";
-              div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
-              // console.log(id,name,picture)
-              if(picture){
-                div.style.backgroundImage = `url(${picture})`
-                div.style.backgroundSize = 'cover'
-              }else{
-                div.textContent = name[0]
-              }
-              div.onclick = function(){
-                _this.fire('hass-more-info', { entityId: id })
-              }
-              map.getPanes().labelPane.appendChild(div);
-              return div;
+            ComplexCustomOverlay.prototype.initialize = function (map) {
+                this._map = map;
+                var div = this._div = document.createElement("div");
+                div.className = "device-marker";
+                div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
+                // console.log(id,name,picture)
+                if (picture) {
+                    div.style.backgroundImage = `url(${picture})`
+                    div.style.backgroundSize = 'cover'
+                } else {
+                    div.textContent = name[0]
+                }
+                div.onclick = function () {
+                    _this.fire('hass-more-info', { entityId: id })
+                }
+                map.getPanes().labelPane.appendChild(div);
+                return div;
             }
-            ComplexCustomOverlay.prototype.draw = function(){
-              var pixel = map.pointToOverlayPixel(point);
-              this._div.style.left = pixel.x - 28 + "px";
-              this._div.style.top  = pixel.y - 28 + "px";
+            ComplexCustomOverlay.prototype.draw = function () {
+                var pixel = map.pointToOverlayPixel(point);
+                this._div.style.left = pixel.x - 28 + "px";
+                this._div.style.top = pixel.y - 28 + "px";
             }
             var myCompOverlay = new ComplexCustomOverlay();
             myCompOverlay.id = id
             map.addOverlay(myCompOverlay);
-        },0)
+        }, 0)
     }
-    
+
     // 更新位置
     loadDevice() {
-        let map = this.map        
+        let map = this.map
         this.debounce(async () => {
             // 这里添加设备
             let states = this.hass.states
@@ -231,7 +242,7 @@ class HaPanelBaiduMap extends HTMLElement {
                 if (!attr['hidden'] && 'longitude' in attr && 'latitude' in attr && stateObj.state != 'home') {
                     let res = await this.translate({ longitude: attr.longitude, latitude: attr.latitude })
                     let point = res[0]
-                    this.addEntityMarker(point, { 
+                    this.addEntityMarker(point, {
                         id: key,
                         name: attr.friendly_name,
                         picture: attr['entity_picture']
@@ -267,7 +278,7 @@ class HaPanelBaiduMap extends HTMLElement {
 
     // 操作面板
     actionPanel() {
-        
+
         // 获取所有设备
         this.deviceList = []
 
@@ -302,50 +313,50 @@ class HaPanelBaiduMap extends HTMLElement {
         ZoomControl.prototype.initialize = (map) => {
             // 创建一个DOM元素
             var div = document.createElement("div");
-			div.className = 'right-action-panel'
-			div.style.cssText = `background:white;font-size:12px;`
+            div.className = 'right-action-panel'
+            div.style.cssText = `background:white;font-size:12px;`
             let select = document.createElement('select')
             select.className = "select-device"
-			
-			// 设备
-			let optgroup = document.createElement('optgroup')
-			optgroup.label = "设备"
+
+            // 设备
+            let optgroup = document.createElement('optgroup')
+            optgroup.label = "设备"
             this.deviceList.forEach(ele => {
                 let option = document.createElement('option')
                 option.value = ele.id
                 option.text = ele.name
                 optgroup.appendChild(option)
             })
-			select.appendChild(optgroup)
-			// 功能
-			let optgroupAction = document.createElement('optgroup')
-			optgroupAction.label = "功能"
-            let actionArr = [{id:'a1',name:'GPS运动轨迹' }]
-			actionArr.forEach(ele => {
+            select.appendChild(optgroup)
+            // 功能
+            let optgroupAction = document.createElement('optgroup')
+            optgroupAction.label = "功能"
+            let actionArr = [{ id: 'a1', name: 'GPS运动轨迹' }]
+            actionArr.forEach(ele => {
                 let option = document.createElement('option')
                 option.value = ele.id
                 option.text = ele.name
                 optgroupAction.appendChild(option)
             })
-			select.appendChild(optgroupAction)
-			
+            select.appendChild(optgroupAction)
+
             select.onchange = () => {
                 // 这里重新定位
-				if(select.selectedIndex < this.deviceList.length){
-					let { longitude, latitude } = this.deviceList[select.selectedIndex]
-					this.translate({ longitude, latitude }).then(res => {
-						map.centerAndZoom(res[0], 18);
-					})	
-				}else{
-					if(select.value === 'a1'){
-						let gg = this.$('#gps')
-						gg.src = `${this.url_path}/travel.html?r=${Date.now()}`
-						gg.classList.toggle('hide')
-					}
-					// console.log(select.value)
-				}
+                if (select.selectedIndex < this.deviceList.length) {
+                    let { longitude, latitude } = this.deviceList[select.selectedIndex]
+                    this.translate({ longitude, latitude }).then(res => {
+                        map.centerAndZoom(res[0], 18);
+                    })
+                } else {
+                    if (select.value === 'a1') {
+                        let gg = this.$('#gps')
+                        gg.src = `${this.url_path}/travel.html?r=${Date.now()}`
+                        gg.classList.toggle('hide')
+                    }
+                    // console.log(select.value)
+                }
             }
-			
+
             // 添加文字说明
             div.appendChild(select);
             // 添加DOM元素到地图中
@@ -402,36 +413,36 @@ class HaPanelBaiduMap extends HTMLElement {
         })
     }
 
-	set narrow(value) {
-		let menuButton = this.shadow.querySelector('ha-menu-button')
-		if(menuButton){
-			menuButton.hass = this.hass
-			menuButton.narrow = value
-		}
+    set narrow(value) {
+        let menuButton = this.shadow.querySelector('ha-menu-button')
+        if (menuButton) {
+            menuButton.hass = this.hass
+            menuButton.narrow = value
+        }
     }
-	
+
     get panel() {
         return this._panel
     }
 
     set panel(value) {
         this._panel = value
-		let {ak, url_path} = value.config
-		this.url_path = url_path
+        let { ak, url_path } = value.config
+        this.url_path = url_path
         if (ak) {
             if (ak === 'ha_cloud_music') { ak = 'hNT4WeW0AGvh2GuzuO92OfM6hCW25HhX' }
             window.BMAP_PROTOCOL = "https"
             window.BMap_loadScriptTime = (new Date).getTime()
-			const _this = this
-			window.BMap_HaBaiduMap = {
-				url: `https://api.map.baidu.com/getscript?v=3.0&ak=${ak}`,
-				close(){
-					let {$} = _this
-					$('.select-device').selectedIndex = 0
-					
-					$('#gps').classList.toggle('hide')
-				}
-			}
+            const _this = this
+            window.BMap_HaBaiduMap = {
+                url: `https://api.map.baidu.com/getscript?v=3.0&ak=${ak}`,
+                close() {
+                    let { $ } = _this
+                    $('.select-device').selectedIndex = 0
+
+                    $('#gps').classList.toggle('hide')
+                }
+            }
             this.loadScript(BMap_HaBaiduMap.url).then(res => {
                 this.ready()
             })
