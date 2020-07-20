@@ -17,7 +17,7 @@ def setup(hass, config):
     cfg  = config[DOMAIN]
     _name = cfg.get('name', '百度地图')
     _icon = cfg.get('icon', 'mdi:map-marker-radius')
-    _ak = cfg.get("ak", 'ha_cloud_music')
+    _ak = cfg.get("ak", 'hNT4WeW0AGvh2GuzuO92OfM6hCW25HhX')
     record = cfg.get('record', [])
     map_hidden = cfg.get('map', '')
         
@@ -26,8 +26,9 @@ def setup(hass, config):
     if os.path.isdir(local):
         hass.http.register_static_path(ROOT_PATH, local, False)
 
-    hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/ha-panel-baidu-map.js')
-    
+    hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/ha-panel-baidu-map.js')    
+    # hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/lovelace-baidu-map.js')
+    # hass.states.set(DOMAIN + '.api', 'https://api.map.baidu.com/getscript?v=3.0&ak=' + _ak)
     _LOGGER.info('''
 -------------------------------------------------------------------
 
