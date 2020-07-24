@@ -7,7 +7,7 @@ from .api_storage import ApiStorage
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '2.3'
+VERSION = '2.4'
 URL = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 # 定时器时间
@@ -27,8 +27,8 @@ def setup(hass, config):
         hass.http.register_static_path(ROOT_PATH, local, False)
 
     hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/ha-panel-baidu-map.js')    
-    # hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/lovelace-baidu-map.js')
-    # hass.states.set(DOMAIN + '.api', 'https://api.map.baidu.com/getscript?v=3.0&ak=' + _ak)
+    hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/lovelace-baidu-map.js')
+    hass.states.set(DOMAIN + '.api', 'https://api.map.baidu.com/getscript?v=3.0&ak=' + _ak)
     _LOGGER.info('''
 -------------------------------------------------------------------
 

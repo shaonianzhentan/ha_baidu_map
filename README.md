@@ -35,6 +35,9 @@ latitude=%LAT&longitude=%LON&device=我的手机&accuracy=%ACC&battery=%BATT&spe
 
 # 更新日志
 
+### v2.4
+- 添加地图卡片
+
 ### v2.3
 - 修复图标不显示的问题
 - 右上角新增编辑图标

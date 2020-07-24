@@ -17,6 +17,8 @@ class LovelaceBaiduMap extends HTMLElement {
             throw new Error('你需要定义一个实体');
         }
         this._config = config;
+        // 更新
+        this.updated()
     }
 
     // 卡片的高度(1 = 50px)
@@ -105,6 +107,21 @@ class LovelaceBaiduMap extends HTMLElement {
         const style = document.createElement('style')
         style.textContent = `
             .lovelace-baidu-map{}
+            .device-marker{
+                position:absolute;
+                vertical-align: top;
+                display: block;
+                margin: 0 auto;
+                width: 2.5em;
+                text-align: center;
+                height: 2.5em;
+                line-height: 2.5em;
+                font-size: 1.5em;
+                border-radius: 50%;
+                border: 0.1em solid var(--ha-marker-color, var(--default-primary-color));
+                color: rgb(76, 76, 76);
+                background-color: white;
+              }
         `
         shadow.appendChild(style);
         // 保存核心DOM对象
@@ -116,7 +133,9 @@ class LovelaceBaiduMap extends HTMLElement {
         /* ***************** 附加代码 ***************** */
         let { _config, $ } = this
         this.loadScript(hass.states['ha_baidu_map.api'].state).then(() => {
-            this.ready()
+            setTimeout(() => {
+                this.ready()
+            }, 1000)
         })
     }
 
@@ -151,6 +170,9 @@ class LovelaceBaiduMap extends HTMLElement {
             map.addEventListener("touchend", function (e) {
                 map.disableDragging();
             });
+            // 添加区域
+            this.loadZone()
+
             // 更新地图
             this.update_map = () => {
                 let entity_id = this._config['entity']
@@ -159,22 +181,40 @@ class LovelaceBaiduMap extends HTMLElement {
                     let mPoint = res[0]
                     // 中心点
                     map.centerAndZoom(mPoint, 18);
-                    if (entity_picture) {
-                        this.addEntityMarker(mPoint, {
-                            id: entity_id,
-                            name: friendly_name,
-                            picture: entity_picture
-                        })
-                    } else {
-                        // 添加圆形区域
-                        var circle = new BMap.Circle(mPoint, radius, { fillColor: "#FF9800", strokeColor: 'orange', strokeWeight: 1, fillOpacity: 0.3, strokeOpacity: 0.5 });
-                        map.addOverlay(circle);
-                        this.addIconMarker(mPoint, icon, entity_id)
-                    }
+                    if (entity_id.includes('zone.')) return;
+                    this.addEntityMarker(mPoint, {
+                        id: entity_id,
+                        name: friendly_name,
+                        picture: entity_picture
+                    })
                 })
             }
             this.update_map()
         }
+    }
+
+    //加载区域
+    loadZone() {
+        let map = this.map
+        this.debounce(async () => {
+            // 这里添加设备
+            let states = this._hass.states
+            let keys = Object.keys(states).filter(ele => ele.indexOf('zone') === 0)
+            for (let key of keys) {
+                let stateObj = states[key]
+                let attr = stateObj.attributes
+                // 如果有经纬度，并且不在家，则标记
+                if (!attr['passive'] && 'longitude' in attr && 'latitude' in attr) {
+                    let res = await this.translate({ longitude: attr.longitude, latitude: attr.latitude })
+                    let point = res[0]
+                    // 添加圆形区域
+                    var circle = new BMap.Circle(point, attr.radius, { fillColor: "#FF9800", strokeColor: 'orange', strokeWeight: 1, fillOpacity: 0.3, strokeOpacity: 0.5 });
+                    map.addOverlay(circle);
+                    // 添加图标
+                    this.addIconMarker(point, attr.icon, key)
+                }
+            }
+        }, 1000)
     }
 
     // 添加Icon标记
@@ -232,7 +272,7 @@ class LovelaceBaiduMap extends HTMLElement {
                 var div = this._div = document.createElement("div");
                 div.className = "device-marker";
                 div.style.zIndex = BMap.Overlay.getZIndex(point.lat);
-                // console.log(id,name,picture)
+                // console.log(id, name, picture)
                 if (picture) {
                     div.style.backgroundImage = `url(${picture})`
                     div.style.backgroundSize = 'cover'
@@ -267,6 +307,29 @@ class LovelaceBaiduMap extends HTMLElement {
                 }
             })
         })
+    }
+
+
+    /**
+    * 防抖
+    * @param {Function} fn
+    * @param {Number} wait
+    */
+    debounce(fn, wait) {
+        let cache = this.cache || {}
+        let fnKey = fn.toString()
+        let timeout = cache[fnKey]
+        if (timeout != null) clearTimeout(timeout)
+        cache[fnKey] = setTimeout(() => {
+            fn()
+            // 清除内存占用
+            if (Object.keys(cache).length === 0) {
+                this.cache = null
+            } else {
+                delete this.cache[fnKey]
+            }
+        }, wait)
+        this.cache = cache
     }
 }
 // 定义DOM对象元素
@@ -313,9 +376,9 @@ class LovelaceBaiduMapEditor extends HTMLElement {
 
         let arr = [], list = [], states = hass.states
         Object.keys(states).filter(k => {
-            return true
+            // return true
             // 过滤设备
-            if (k.indexOf('zone') === 0 || k.indexOf('person') === 0 || k.indexOf('device_tracker') === 0) {
+            if (k.indexOf('person') === 0 || k.indexOf('device_tracker') === 0) {
                 let attributes = states[k]['attributes']
                 return Reflect.has(attributes, 'latitude') && Reflect.has(attributes, 'longitude')
             }
@@ -357,9 +420,14 @@ class LovelaceBaiduMapEditor extends HTMLElement {
 
         /* ***************** 附加代码 ***************** */
         let { _config, $ } = this
+        let _this = this
         // // 定义事件
         $('.lovelace-baidu-map-editor paper-listbox').addEventListener('selected-changed', function () {
-            console.log(list[this.selected])
+            let obj = list[this.selected]
+            _this.configChanged({
+                type: 'custom:lovelace-baidu-map',
+                entity: obj.entity_id
+            })
         })
     }
 
