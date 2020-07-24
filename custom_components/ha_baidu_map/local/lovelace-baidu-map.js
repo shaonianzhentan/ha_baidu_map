@@ -342,7 +342,7 @@ customElements.define('lovelace-baidu-map', LovelaceBaiduMap);
 class LovelaceBaiduMapEditor extends HTMLElement {
 
     setConfig(config) {
-        console.log('预览配置', config)
+        // console.log('预览配置', config)
         this._config = config;
     }
 
@@ -352,7 +352,7 @@ class LovelaceBaiduMapEditor extends HTMLElement {
             composed: true
         });
         event.detail = { config: newConfig };
-        console.log('更新预览配置', newConfig)
+        // console.log('更新预览配置', newConfig)
         this.dispatchEvent(event);
     }
 
@@ -370,7 +370,6 @@ class LovelaceBaiduMapEditor extends HTMLElement {
 
     // 创建界面
     created(hass) {
-        console.log(hass)
         /* ***************** 基础代码 ***************** */
         const shadow = this.attachShadow({ mode: 'open' });
 
