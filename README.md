@@ -35,6 +35,10 @@ latitude=%LAT&longitude=%LON&device=我的手机&accuracy=%ACC&battery=%BATT&spe
 
 # 更新日志
 
+### 2020-8-11
+- 移除隐藏默认地图功能
+- 新增定位数据添加接口
+
 ### v2.4
 - 添加地图卡片
 

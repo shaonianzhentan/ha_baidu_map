@@ -132,7 +132,9 @@ class LovelaceBaiduMap extends HTMLElement {
 
         /* ***************** 附加代码 ***************** */
         let { _config, $ } = this
-        this.loadScript(hass.states['ha_baidu_map.api'].state).then(() => {
+        // 获取百度API
+        let baiduApi = hass.states['map.baidu'].attributes['api']
+        this.loadScript(baiduApi).then(() => {
             setTimeout(() => {
                 this.ready()
             }, 1000)

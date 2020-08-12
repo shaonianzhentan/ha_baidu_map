@@ -1,25 +1,26 @@
 import os, time, re, uuid, logging, json, datetime
 from homeassistant.helpers.event import track_time_interval, async_call_later
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.helpers.network import get_url
 
 from .api_storage import ApiStorage
 
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '2.4'
+VERSION = '3.0'
 URL = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
-# 定时器时间
-TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=3)
+# 定位地址
+LOCATION_URL = '/' + DOMAIN + '-location-'
 
 def setup(hass, config):
     cfg  = config[DOMAIN]
     _name = cfg.get('name', '百度地图')
     _icon = cfg.get('icon', 'mdi:map-marker-radius')
     _ak = cfg.get("ak", 'hNT4WeW0AGvh2GuzuO92OfM6hCW25HhX')
-    record = cfg.get('record', [])
-    map_hidden = cfg.get('map', '')
+    global LOCATION_URL
+    LOCATION_URL = LOCATION_URL + cfg.get("key", uuid.uuid4())
         
     # 注册静态目录
     local = hass.config.path("custom_components/" + DOMAIN + "/local")
@@ -28,12 +29,21 @@ def setup(hass, config):
 
     hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/ha-panel-baidu-map.js')    
     hass.components.frontend.add_extra_js_url(hass, ROOT_PATH + '/lovelace-baidu-map.js')
-    hass.states.set(DOMAIN + '.api', 'https://api.map.baidu.com/getscript?v=3.0&ak=' + _ak)
+
+    base_url = get_url(hass)
+    hass.states.async_set('map.baidu', VERSION, {
+        "icon": "mdi:map-marker-radius",
+        "friendly_name": "百度地图",
+        'api': 'https://api.map.baidu.com/getscript?v=3.0&ak=' + _ak,
+        'location': base_url + LOCATION_URL
+    })
+
     _LOGGER.info('''
 -------------------------------------------------------------------
 
     百度地图【作者QQ：635147515】
-    版本：''' + VERSION + '''    
+    版本：''' + VERSION + '''
+    定位地址：''' + base_url + LOCATION_URL + '''
     项目地址：https://github.com/shaonianzhentan/ha_baidu_map
     
 -------------------------------------------------------------------''')
@@ -49,50 +59,39 @@ def setup(hass, config):
     hass.http.register_view(HassGateView)
     
     sql = ApiStorage(hass)
-    hass.data[ROOT_PATH] = sql
-    
-    # 定时器
-    def interval(now):
-        # 隐藏原始地图
-        if map_hidden == 'hidden':
-            DATA_PANELS = 'frontend_panels'
-            panel = hass.data.get(DATA_PANELS, {})
-            if 'map' in panel:
-                hass.components.frontend.async_remove_panel("map")
-                print('删除自带地图')
-                
-        # 读取设备信息
-        for key in record:
-            state = hass.states.get(key)
-            # 判断是否为空
-            if state is None:
-                continue
-            # 判断是否包含 属性对象
-            if hasattr(state, 'attributes') == False:
-                continue
-            attr =  dict(state.attributes)
-            if 'activity' not in attr or attr['activity'] is None:
-                continue
-            arr = attr['activity'].split('-')
-            # 如果是特定格式，则添加数据
-            if  len(arr) == 3:
-                # 如果经纬度不一样，则记录
-                # _LOGGER.info(state)
-                # attr['latitude']
-                # attr['longitude']
-                # attr['friendly_name']            
-                # attr['gps_accuracy']    
-                # attr['battery_level']
-                attr['activity'] = arr[0]
-                attr['dist'] = arr[1]
-                attr['starttimestamp'] = arr[2]
-                attr['cdate'] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-                sql.add(key, attr)
-
-    track_time_interval(hass, interval, TIME_BETWEEN_UPDATES)    
-        
+    hass.data[ROOT_PATH] = sql        
     return True
 
+# 记录信息
+class LocationGateView(HomeAssistantView):
+    url = LOCATION_URL
+    name = DOMAIN
+    requires_auth = False
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        query = request.query
+        entity_id = query['entity_id']
+        latitude = query['latitude']
+        longitude = query['longitude']
+        sts = query['sts']
+        state = hass.states.get(entity_id)
+        if state is not None and hasattr(state, 'attributes'):
+            attributes = {
+                'latitude': latitude,
+                'longitude': longitude,
+                'battery': battery,
+                'sts': sts
+            }
+            hass.states.async_set(entity_id, state.state, attributes={
+                **entity.attributes,
+                **attributes
+            })
+            return self.json({'code':0, 'msg': '定位发送成功'})
+
+        return self.json({'code':1, 'msg': '密钥不匹配'})
+
+# 获取信息
 class HassGateView(HomeAssistantView):
 
     url = URL
@@ -119,3 +118,11 @@ class HassGateView(HomeAssistantView):
         except Exception as e:
             print(e)
             return self.json({'code':1, 'msg': '出现异常'})
+
+def timestamp_to_str(timestamp=None, format='%Y-%m-%d %H:%M:%S'):
+    if timestamp:
+        time_tuple = time.localtime(timestamp)  # 把时间戳转换成时间元祖
+        result = time.strftime(format, time_tuple)  # 把时间元祖转换成格式化好的时间
+        return result
+    else:
+        return time.strptime(format)
