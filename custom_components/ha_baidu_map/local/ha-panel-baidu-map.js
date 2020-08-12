@@ -230,11 +230,10 @@ class HaPanelBaiduMap extends HTMLElement {
 
     // 更新位置
     loadDevice() {
-        let map = this.map
         this.debounce(async () => {
             // 这里添加设备
             let states = this.hass.states
-            let keys = Object.keys(states).filter(ele => ele.indexOf('device_tracker') === 0)
+            let keys = Object.keys(states).filter(ele => ele.indexOf('device_tracker') === 0 || ele.indexOf('person') === 0)
             for (let key of keys) {
                 let stateObj = states[key]
                 let attr = stateObj.attributes
@@ -283,7 +282,9 @@ class HaPanelBaiduMap extends HTMLElement {
         this.deviceList = []
 
         let states = this.hass.states
-        let keys = Object.keys(states).filter(ele => ele.indexOf('device_tracker') === 0 || ele.indexOf('zone') === 0)
+        let keys = Object.keys(states).filter(ele => ele.indexOf('device_tracker') === 0
+            || ele.indexOf('zone') === 0
+            || ele.indexOf('person') === 0)
         keys.forEach(key => {
             let stateObj = states[key]
             let attr = stateObj.attributes
@@ -430,7 +431,6 @@ class HaPanelBaiduMap extends HTMLElement {
         let { ak, url_path } = value.config
         this.url_path = url_path
         if (ak) {
-            if (ak === 'ha_cloud_music') { ak = 'hNT4WeW0AGvh2GuzuO92OfM6hCW25HhX' }
             window.BMAP_PROTOCOL = "https"
             window.BMap_loadScriptTime = (new Date).getTime()
             const _this = this

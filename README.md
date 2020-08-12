@@ -1,9 +1,6 @@
 # 百度地图
 在HA里使用的百度地图，支持GPS定位轨迹显示
 
-# 注意事项
-- 如果你不使用GPSLogger定位设备，参数中则完全不需要声明record的值
-
 # 使用方式
 
 ```
@@ -17,27 +14,22 @@ ha_baidu_map:
   name: 百度地图
   icon: mdi:map-marker-radius
   ak: 百度地图AK密钥
-  map: hidden
-  record:
-    - device_tracker.wo_de_shou_ji
-
 ```
 
-## 在GPSLogger应用里的配置（其它参考官方文档）
+## 在GPSLogger应用里的配置
 ```
 
-# HTTP 内容
-# 只能修改【我的手机】
-
-latitude=%LAT&longitude=%LON&device=我的手机&accuracy=%ACC&battery=%BATT&speed=%SPD&direction=%DIR&altitude=%ALT&provider=%PROV&activity=%ACT-%DIST-%STARTTIMESTAMP
+http://IP:8123/ha_baidu_map-location-【定义的key】?entity_id=【实体ID】&latitude=%LAT&longitude=%LON&battery=%BATT&sts=%STARTTIMESTAMP
 
 ```
 
 # 更新日志
 
-### 2020-8-11
+### 2020-8-12
 - 移除隐藏默认地图功能
 - 新增定位数据添加接口
+- 修复不显示person实体的问题
+- 更换实体名称
 
 ### v2.4
 - 添加地图卡片

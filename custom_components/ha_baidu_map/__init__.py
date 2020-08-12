@@ -11,16 +11,15 @@ DOMAIN = 'ha_baidu_map'
 VERSION = '3.0'
 URL = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
-# 定位地址
-LOCATION_URL = '/' + DOMAIN + '-location-'
 
 def setup(hass, config):
     cfg  = config[DOMAIN]
     _name = cfg.get('name', '百度地图')
     _icon = cfg.get('icon', 'mdi:map-marker-radius')
     _ak = cfg.get("ak", 'hNT4WeW0AGvh2GuzuO92OfM6hCW25HhX')
-    global LOCATION_URL
-    LOCATION_URL = LOCATION_URL + cfg.get("key", uuid.uuid4())
+    
+    # 定位地址
+    LOCATION_URL = '/' + DOMAIN + '-location-' + cfg.get('key', str(uuid.uuid4()).replace('-', ''))
         
     # 注册静态目录
     local = hass.config.path("custom_components/" + DOMAIN + "/local")
@@ -35,7 +34,8 @@ def setup(hass, config):
         "icon": "mdi:map-marker-radius",
         "friendly_name": "百度地图",
         'api': 'https://api.map.baidu.com/getscript?v=3.0&ak=' + _ak,
-        'location': base_url + LOCATION_URL
+        'location': base_url + LOCATION_URL,
+        '项目地址': 'https://github.com/shaonianzhentan/ha_baidu_map'
     })
 
     _LOGGER.info('''
@@ -60,36 +60,37 @@ def setup(hass, config):
     
     sql = ApiStorage(hass)
     hass.data[ROOT_PATH] = sql        
+    # 记录信息
+    class LocationGateView(HomeAssistantView):
+        url = LOCATION_URL
+        name = DOMAIN
+        requires_auth = False
+
+        async def get(self, request):
+            hass = request.app["hass"]
+            query = request.query
+            try:
+                entity_id = query['entity_id']
+                latitude = query['latitude']
+                longitude = query['longitude']
+                battery = query.get('battery', 0)
+                sts = query['sts']
+                entity = hass.states.get(entity_id)
+                if entity is not None and hasattr(entity, 'attributes'):
+                    attributes = {
+                        **entity.attributes,
+                        'latitude': latitude,
+                        'longitude': longitude,
+                        'battery': battery,
+                        'sts': timestamp_to_str(int(sts))
+                    }
+                    hass.states.async_set(entity_id, entity.state, attributes)
+                    return self.json({'code':0, 'msg': '定位发送成功'})
+            except Exception as ex:
+                print(ex)
+                return self.json({'code':1, 'msg': '出现异常'})
+    hass.http.register_view(LocationGateView)
     return True
-
-# 记录信息
-class LocationGateView(HomeAssistantView):
-    url = LOCATION_URL
-    name = DOMAIN
-    requires_auth = False
-
-    async def get(self, request):
-        hass = request.app["hass"]
-        query = request.query
-        entity_id = query['entity_id']
-        latitude = query['latitude']
-        longitude = query['longitude']
-        sts = query['sts']
-        state = hass.states.get(entity_id)
-        if state is not None and hasattr(state, 'attributes'):
-            attributes = {
-                'latitude': latitude,
-                'longitude': longitude,
-                'battery': battery,
-                'sts': sts
-            }
-            hass.states.async_set(entity_id, state.state, attributes={
-                **entity.attributes,
-                **attributes
-            })
-            return self.json({'code':0, 'msg': '定位发送成功'})
-
-        return self.json({'code':1, 'msg': '密钥不匹配'})
 
 # 获取信息
 class HassGateView(HomeAssistantView):
