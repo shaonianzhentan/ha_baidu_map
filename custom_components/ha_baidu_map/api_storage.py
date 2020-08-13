@@ -5,7 +5,7 @@ class ApiStorage():
 
     def __init__(self, hass):
         self.hass = hass
-        self.cache_dir = './.storage/ha_baidu_map'
+        self.cache_dir = './.shaonianzhentan/ha_baidu_map'
         # 初始化文件夹
         self.cfg = ApiConfig(hass.config.path(self.cache_dir))
 
@@ -21,7 +21,7 @@ class ApiStorage():
             files = self.cfg.get_files(dir['path'])
             for file in files:
                 # 小于2kb数据直接丢弃
-                if file['size'] < 2048:                    
+                if file['size'] < 2048:
                     continue
                 _name = file['name'].replace('.json', '')
                 _list[lastIndex]['list'].append({'sts': _name, 'cdate': time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(int(_name)))})
@@ -37,11 +37,10 @@ class ApiStorage():
 
     # 添加数据
     def add(self, entity_id, gps_info):
-        _dir_name = entity_id.split('.')[1]
-        _dir = self.hass.config.path(self.cache_dir + '/' + _dir_name)
+        _dir = self.hass.config.path(self.cache_dir + '/' + entity_id)
         if os.path.exists(_dir) == False:           
             os.mkdir(_dir) 
-        sts_name = _dir_name + '/' + gps_info['starttimestamp'] + '.json'
+        sts_name = entity_id + '/' + gps_info['sts'] + '.json'
         _list = self.cfg.read(sts_name)
         if _list == None:
             _list = []

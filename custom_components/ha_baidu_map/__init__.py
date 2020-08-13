@@ -85,6 +85,8 @@ def setup(hass, config):
                         'sts': timestamp_to_str(int(sts))
                     }
                     hass.states.async_set(entity_id, entity.state, attributes)
+                    # 存储定位信息
+                    sql.add(entity_id, attributes)
                     return self.json({'code':0, 'msg': '定位发送成功'})
             except Exception as ex:
                 print(ex)

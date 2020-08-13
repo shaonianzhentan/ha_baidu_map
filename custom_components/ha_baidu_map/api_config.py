@@ -4,8 +4,18 @@ class ApiConfig():
 
     def __init__(self, _dir):        
         if os.path.exists(_dir) == False:           
-            os.mkdir(_dir) 
+            self.mkdir(_dir) 
         self.dir = _dir
+
+    # 创建文件夹
+    def mkdir(self, path):
+        folders = []        
+        while not os.path.isdir(path):
+            path, suffix = os.path.split(path)
+            folders.append(suffix)
+        for folder in folders[::-1]:
+            path = os.path.join(path, folder)
+            os.mkdir(path)
 
     def get_dirs(self, _path):
         file_name = os.listdir(_path)
