@@ -44,14 +44,12 @@ class ApiStorage():
         _list = self.cfg.read(sts_name)
         if _list == None:
             _list = []
-        
         # 如果本次传入的数据，与最后一次一样，则不记录
         _len = len(_list)
         if  _len > 0:
             attr = _list[_len-1]
             if attr['latitude'] == gps_info['latitude'] and attr['longitude'] == gps_info['longitude']:
                 return
-
         # 添加数据
         _list.append(gps_info)
         # 写入数据

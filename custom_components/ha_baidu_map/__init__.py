@@ -69,6 +69,7 @@ def setup(hass, config):
         async def get(self, request):
             hass = request.app["hass"]
             query = request.query
+            print(query)
             try:
                 entity_id = query['entity_id']
                 latitude = query['latitude']
@@ -82,7 +83,8 @@ def setup(hass, config):
                         'latitude': latitude,
                         'longitude': longitude,
                         'battery': battery,
-                        'sts': timestamp_to_str(int(sts))
+                        'sts': sts,
+                        'sts_date': timestamp_to_str(int(sts)),
                     }
                     hass.states.async_set(entity_id, entity.state, attributes)
                     # 存储定位信息
