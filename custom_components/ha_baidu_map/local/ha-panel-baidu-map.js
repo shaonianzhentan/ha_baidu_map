@@ -123,11 +123,20 @@ if (window.BMap) {
             let mask = document.createElement('div')
             mask.style = 'height:100vh;width:100vw;position:fixed;top:0;left:0;background:rgba(0,0,0,.5);'
             dialog.appendChild(mask)
-            // 生成设备表格
+            
             let fm = document.createDocumentFragment()
+            // 生成标题
+            let title = document.createElement('div')
+            title.style = `text-align: right; padding: 15px;`
+            title.innerHTML = `<ha-icon icon="mdi:close-circle-outline" style="color: var(--primary-color); --mdc-icon-size: 30px;"></ha-icon>`
+            title.onclick = ()=>{
+                dialog.remove()
+            }
+            fm.appendChild(title)
+            // 生成设备表格
             let table = document.createElement('table')
             table.border = true
-            table.style = 'width:90%;border-spacing: 1px;text-align:left; border-collapse: collapse;margin: 20px auto;'
+            table.style = 'width:90%;border-spacing: 1px;text-align:left; border-collapse: collapse;margin: 0 auto;'
             table.borderSpacing = 10
             let tr = document.createElement('tr')
             tr.innerHTML = `
@@ -174,7 +183,7 @@ if (window.BMap) {
             fm.appendChild(table)
 
             let panel = document.createElement('div')
-            panel.style = `height:80vh;width:80vw;left:10vw;top:10vh;position:absolute;background:white;`
+            panel.style = `height:80vh;width:80vw;left:10vw;top:10vh;position:absolute;background:white;overflow:auto;`
             panel.appendChild(fm)
             dialog.appendChild(panel)
 
