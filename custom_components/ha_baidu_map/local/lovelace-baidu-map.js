@@ -118,7 +118,7 @@ class LovelaceBaiduMap extends HTMLElement {
                 line-height: 2.5em;
                 font-size: 1.5em;
                 border-radius: 50%;
-                border: 0.1em solid var(--ha-marker-color, var(--default-primary-color));
+                border: 0.1em solid var(--primary-color);
                 color: rgb(76, 76, 76);
                 background-color: white;
               }
