@@ -4,16 +4,8 @@
 # 使用方式
 
 ```
-# 使用内置密钥（有限额，最好自己申请密钥）
 ha_baidu_map:
-
-# 完整配置
-# record: 要记录使用GPSLogger的设备（在使用GPSLogger定位时配置使用）
-# map: hidden（侧边栏隐藏自带的地图）
-ha_baidu_map:
-  name: 百度地图
-  icon: mdi:map-marker-radius
-  ak: 百度地图AK密钥
+  ak: 百度地图浏览器的AK密钥
 ```
 
 ## 在GPSLogger应用里的配置
