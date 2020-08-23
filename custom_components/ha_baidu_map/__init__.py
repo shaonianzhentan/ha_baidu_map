@@ -8,7 +8,7 @@ from .api_storage import ApiStorage
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '3.1'
+VERSION = '3.1.1'
 URL = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 
@@ -34,7 +34,7 @@ def setup(hass, config):
         "icon": "mdi:map-marker-radius",
         "friendly_name": "百度地图",
         'api': 'https://api.map.baidu.com/getscript?v=3.0&ak=' + _ak,
-        'location': base_url + LOCATION_URL,
+        'location': base_url + LOCATION_URL + '?latitude=%LAT&longitude=%LON&battery=%BATT&sts=%STARTTIMESTAMP&entity_id=实体ID',
         '项目地址': 'https://github.com/shaonianzhentan/ha_baidu_map'
     })
 
