@@ -17,6 +17,9 @@ http://IP:8123/ha_baidu_map-location-【定义的key】?entity_id=【实体ID】
 
 # 更新日志
 
+### 2020-9-20
+- 将百度HTTP协议改为HTTPS
+
 ### 2020-8-12
 - 移除隐藏默认地图功能
 - 新增定位数据添加接口
