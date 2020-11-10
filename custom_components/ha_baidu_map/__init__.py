@@ -8,7 +8,7 @@ from .api_storage import ApiStorage
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '3.1.3'
+VERSION = '3.0'
 URL = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 
@@ -53,7 +53,7 @@ def setup(hass, config):
         _icon,
         frontend_url_path='ha_baidu_map',
         config={"ak": _ak, "url_path": ROOT_PATH},
-        require_admin=True)
+        require_admin=False)
 
     hass.http.register_view(HassGateView)
     
