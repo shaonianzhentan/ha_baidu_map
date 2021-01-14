@@ -1,10 +1,12 @@
 # 百度地图
 在HA里使用的百度地图，支持GPS定位轨迹显示
 
-## 不懂就看视频哈
+# 使用方式
+
+> 不懂就看视频哈
 - https://www.bilibili.com/video/BV1z54y1e7vE
 - https://www.bilibili.com/video/BV1zD4y127vG
-# 使用方式
+
 ```
 ha_baidu_map:
   ak: 百度地图【浏览器的浏览器的浏览器的AK密钥】 - 如果不会配置ak就把这行删掉，初次安装空白就刷新一下页面
