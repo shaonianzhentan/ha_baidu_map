@@ -45,6 +45,7 @@ class HaPanelBaiduMap extends HTMLElement {
          app-header, app-toolbar {
             background-color: var(--primary-color);
             font-weight: 400;
+            height: 56px;
             color: var(--text-primary-color, white);
         }
         #baidu-map{width:100%;height:calc(100vh - 64px); z-index: 0;}
@@ -67,12 +68,26 @@ class HaPanelBaiduMap extends HTMLElement {
         }
         .hide{display:none;}
     #gps{width:100%;height:100vh;border:none;position:absolute;top:0;background:white;}
+    .BMap_shadow,
+    .BMap_pop{display:none!important;}
     </style>
 `
 
         shadow.appendChild(div)
         this.shadow = shadow
         this.$ = shadow.querySelector.bind(shadow)
+    }
+
+    // 获取位置
+    getPosition(attr) {
+        if (('longitude' in attr && 'latitude' in attr) || 'Longitude' in attr && 'Latitude' in attr) {
+            return {
+                longitude: attr.longitude || attr.Longitude,
+                latitude: attr.latitude || attr.Latitude
+            }
+        } else {
+            return null
+        }
     }
 
     ready() {
@@ -93,6 +108,7 @@ class HaPanelBaiduMap extends HTMLElement {
                 let title = document.createElement('div')
                 title.setAttribute('main-title', '')
                 title.textContent = '百度地图'
+                title.style.marginLeft = '20px'
                 toolbar.appendChild(title)
                 // 添加编辑图标
                 let haIconButton = document.createElement('ha-icon-button')
@@ -147,18 +163,20 @@ class HaPanelBaiduMap extends HTMLElement {
                     table.appendChild(tr)
 
                     let states = this.hass.states
-                    console.log()
                     // 获取家的坐标
                     let homeAttr = states['zone.home']['attributes']
                     let homelatitude = homeAttr['latitude']
                     let homelongitude = homeAttr['longitude']
                     // 获取所有定位设备
-                    let keys = Object.keys(states).filter(ele => ['device_tracker', 'zone', 'person'].includes(ele.split('.')[0]))
+                    let keys = Object.keys(states).filter(ele =>
+                        ['device_tracker', 'zone', 'person'].includes(ele.split('.')[0])
+                        || ele.includes('di_li_bian_ma_wei_zhi'))
                     keys.forEach(key => {
                         let stateObj = states[key]
                         let attr = stateObj.attributes
-                        if ('longitude' in attr && 'latitude' in attr) {
-                            let { longitude, latitude } = attr
+                        let pos = this.getPosition(attr)
+                        if (pos) {
+                            let { longitude, latitude } = pos
                             tr = document.createElement('tr')
                             let valueArr = [key, attr.friendly_name, getDistance(latitude, longitude, homelatitude, homelongitude)]
                             valueArr.forEach(value => {
@@ -352,20 +370,26 @@ class HaPanelBaiduMap extends HTMLElement {
         this.debounce(async () => {
             // 这里添加设备
             let states = this.hass.states
-            let keys = Object.keys(states).filter(ele => ele.indexOf('device_tracker') === 0 || ele.indexOf('person') === 0)
+            let keys = Object.keys(states).filter(ele => ele.indexOf('device_tracker') === 0
+                || ele.indexOf('person') === 0
+                || ele.includes('di_li_bian_ma_wei_zhi'))
             for (let key of keys) {
                 let stateObj = states[key]
                 let attr = stateObj.attributes
-                // 如果有经纬度，并且不在家，则标记
-                if (!attr['hidden'] && 'longitude' in attr && 'latitude' in attr && stateObj.state != 'home') {
-                    let res = await this.translate({ longitude: attr.longitude, latitude: attr.latitude })
-                    let point = res[0]
-                    this.addEntityMarker(point, {
-                        id: key,
-                        name: attr.friendly_name,
-                        picture: attr['entity_picture']
-                    })
+                let pos = this.getPosition(attr)
+                if (pos) {
+                    // 如果有经纬度，并且不在家，则标记
+                    if (!attr['hidden'] && stateObj.state != 'home') {
+                        let res = await this.translate(pos)
+                        let point = res[0]
+                        this.addEntityMarker(point, {
+                            id: key,
+                            name: attr.friendly_name,
+                            picture: attr['entity_picture']
+                        })
+                    }
                 }
+
             }
         }, 1000)
     }
@@ -407,12 +431,12 @@ class HaPanelBaiduMap extends HTMLElement {
         keys.forEach(key => {
             let stateObj = states[key]
             let attr = stateObj.attributes
-            if ('longitude' in attr && 'latitude' in attr) {
+            if (('longitude' in attr && 'latitude' in attr) || 'Longitude' in attr && 'Latitude' in attr) {
                 this.deviceList.push({
                     id: key,
                     name: attr.friendly_name,
-                    longitude: attr.longitude,
-                    latitude: attr.latitude
+                    longitude: attr.longitude || attr.Longitude,
+                    latitude: attr.latitude || attr.Latitude
                 })
             }
         })
@@ -549,11 +573,6 @@ class HaPanelBaiduMap extends HTMLElement {
     }
 }
 
-// 百度地图使用HTTPS协议
-window.BMAP_PROTOCOL = "https"
-window.BMap_loadScriptTime = (new Date).getTime()
-
-customElements.define('ha-panel-baidu-map', HaPanelBaiduMap);
 
 /* ----------------------------- 卡版 ----------------------------------- */
 class LovelaceBaiduMap extends HTMLElement {
@@ -892,8 +911,6 @@ class LovelaceBaiduMap extends HTMLElement {
         this.cache = cache
     }
 }
-// 定义DOM对象元素
-customElements.define('lovelace-baidu-map', LovelaceBaiduMap);
 
 
 /* ********************  编辑预览  *************************** */
@@ -996,7 +1013,16 @@ class LovelaceBaiduMapEditor extends HTMLElement {
         // $('p').textContent = `当前实体ID：${_config.entity}`
     }
 }
-customElements.define("lovelace-baidu-map-editor", LovelaceBaiduMapEditor);
+
+
+// 百度地图使用HTTPS协议
+window.BMAP_PROTOCOL = "https"
+window.BMap_loadScriptTime = (new Date).getTime()
+
+// 定义DOM对象元素
+if (!customElements.get('ha-panel-baidu-map')) customElements.define('ha-panel-baidu-map', HaPanelBaiduMap);
+if (!customElements.get('lovelace-baidu-map')) customElements.define('lovelace-baidu-map', LovelaceBaiduMap);
+if (!customElements.get('lovelace-baidu-map-editor')) customElements.define('lovelace-baidu-map-editor', LovelaceBaiduMapEditor);
 
 // 添加预览
 window.customCards = window.customCards || [];

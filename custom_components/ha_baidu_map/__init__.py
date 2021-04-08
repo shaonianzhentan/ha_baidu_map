@@ -8,7 +8,7 @@ from .api_storage import ApiStorage
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ha_baidu_map'
-VERSION = '2.4'
+VERSION = '2.4.1'
 URL = '/' + DOMAIN + '-api'
 ROOT_PATH = '/' + DOMAIN + '-local/' + VERSION
 
