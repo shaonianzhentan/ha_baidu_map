@@ -48,7 +48,7 @@ class HaPanelBaiduMap extends HTMLElement {
             height: 56px;
             color: var(--text-primary-color, white);
         }
-        #baidu-map{width:100%;height:calc(100vh - 64px); z-index: 0;}
+        #baidu-map{width:100%;height:calc(100vh - 56px); z-index: 0;}
         .right-action-panel{text-align:center;}
         .select-device{padding:2px 0 5px 10px;border:none;max-width:100px;font-size:12px;text-align:center;line-height:23px;background: transparent;}
         .device-marker{
@@ -66,10 +66,9 @@ class HaPanelBaiduMap extends HTMLElement {
           color: rgb(76, 76, 76);
           background-color: white;
         }
-        .hide{display:none;}
     #gps{width:100%;height:100vh;border:none;position:absolute;top:0;background:white;}
-    .BMap_shadow,
-    .BMap_pop{display:none!important;}
+    .hide,
+    .BMap_shadow,.anchorBL,.BMap_cpyCtrl,.BMap_pop{display:none!important;}
     </style>
 `
 
@@ -699,6 +698,8 @@ class LovelaceBaiduMap extends HTMLElement {
                 color: rgb(76, 76, 76);
                 background-color: white;
               }
+              .hide,
+              .BMap_shadow,.anchorBL,.BMap_cpyCtrl,.BMap_pop{display:none!important;}
         `
         shadow.appendChild(style);
         // 保存核心DOM对象
