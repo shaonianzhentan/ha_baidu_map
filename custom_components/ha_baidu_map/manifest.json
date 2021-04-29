@@ -1,6 +1,7 @@
 {
     "domain": "ha_baidu_map",
     "name": "ha_baidu_map",
+    "version": "1.0",
     "documentation": "https://github.com/shaonianzhentan/ha_baidu_map",
     "requirements": [],
     "dependencies": [],
