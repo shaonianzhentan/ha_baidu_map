@@ -14,18 +14,19 @@ ha_baidu_map:
 
 ## 在GPSLogger应用里的配置
 ```
-
-http://IP:8123/ha_baidu_map-location-【定义的key】?entity_id=【实体ID】&latitude=%LAT&longitude=%LON&battery=%BATT&sts=%STARTTIMESTAMP
+http://IP:8123/ha_baidu_map-location-【自动生成的key】?entity_id=【实体ID】&latitude=%LAT&longitude=%LON&battery=%BATT&sts=%STARTTIMESTAMP
 
 ```
 
 # 更新日志
 
-### v2.5
+### v2.4.3
 - 修复地图点击后出现地点详情的问题
 - 增加设备里的编码地理位置显示
 - 隐藏百度地图版权信息
 - 调整头部高度样式
+- 支持集成添加
+
 ### v2.4
 - 将百度HTTP协议改为HTTPS
 - 移除隐藏默认地图功能

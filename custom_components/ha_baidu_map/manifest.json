@@ -1,9 +1,10 @@
 {
-    "domain": "ha_baidu_map",
-    "name": "ha_baidu_map",
-    "version": "1.0",
-    "documentation": "https://github.com/shaonianzhentan/ha_baidu_map",
-    "requirements": [],
-    "dependencies": [],
-    "codeowners": []
-  }
+  "domain": "ha_baidu_map",
+  "name": "\u767E\u5EA6\u5730\u56FE",
+  "version": "1.0",
+  "config_flow": true,
+  "documentation": "https://github.com/shaonianzhentan/ha_baidu_map",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": []
+}
