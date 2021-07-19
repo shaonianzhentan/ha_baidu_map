@@ -67,3 +67,9 @@ http://IP:8123/ha_baidu_map-location-【自动生成的key】?entity_id=【实�
 - 修复多个区域无法加载的问题
 - 修复头像和官方地图显示不一致的问题
 - 加入区域可以点击查看的功能（这个官方没有）
+
+
+## 如果这个项目对你有帮助，请我喝杯<del><small>咖啡</small></del><b>奶茶</b>吧😘
+|支付宝|微信|
+|---|---|
+<img src="https://ha.jiluxinqing.com/img/alipay.png" align="left" height="160" width="160" alt="支付宝" title="支付宝">  |  <img src="https://ha.jiluxinqing.com/img/wechat.png" align="left" height="160" width="160" alt="微信支付" title="微信">
